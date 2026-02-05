@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+ADMIN-CREDENTIALS.md
+
+# Logs & debug
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Local overrides
+*.local
