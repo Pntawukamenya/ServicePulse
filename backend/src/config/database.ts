@@ -17,7 +17,7 @@ if (!supabaseUrl || supabaseUrl === 'your_supabase_url' || !supabaseUrl.startsWi
 if (!supabaseKey || supabaseKey === 'your_supabase_anon_key' || supabaseKey === 'your_supabase_service_key') {
   console.error('\n❌ Supabase configuration error:');
   console.error('Please set SUPABASE_KEY or SUPABASE_SERVICE_KEY in your .env file');
-  console.error('Get your Supabase keys from: https://app.supabase.com → Your Project → Settings → API\n');
+  console.error('Get your Supabase keys from: https://app.supabase.com → Project → Settings → API\n');
   throw new Error('Invalid or missing Supabase API key. Please configure your .env file with valid Supabase credentials.');
 }
 

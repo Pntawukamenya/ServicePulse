@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { supabase } from '../config/database';
 import { generateToken } from '../utils/jwt';
 import { sendSMS } from '../config/sms';
+import { sendEmail } from '../config/email';
 
 export type IdentifierType = 'email' | 'phone';
 export type UserRole = 'citizen' | 'agency_employee' | 'agency_admin' | 'super_admin' | 'agency' | 'admin';
@@ -43,8 +44,11 @@ async function sendOtpToIdentifier(identifier: string, identifierType: Identifie
     const phone = normalizePhone(identifier);
     await sendSMS(phone, `ServicePulse verification code: ${otp}. Valid for 10 minutes.`);
   } else {
-    // Email OTP - log in dev (configure email service for production)
-    console.log(`[OTP] Email ${identifier}: ${otp}`);
+    await sendEmail({
+      to: identifier.trim().toLowerCase(),
+      subject: 'ServicePulse - Verification Code',
+      text: `Your ServicePulse verification code is: ${otp}\n\nValid for 10 minutes.\n\nIf you didn't request this, please ignore this email.`,
+    });
   }
 }
 
