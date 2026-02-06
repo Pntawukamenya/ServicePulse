@@ -64,7 +64,7 @@ export default function Home() {
       {/* Platform impact stats - FixMyStreet/SeeClickFix style transparency */}
       <section className="py-12 sm:py-16 border-y border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
         <div className="container-main">
-          <h2 className="text-xl font-semibold text-gray-600 dark:text-gray-400 text-center mb-8">
+          <h2 className="text-xl font-bold text-gray-600 dark:text-gray-400 text-center mb-8">
             {t('home.impactStats')}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
