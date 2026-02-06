@@ -3,21 +3,18 @@ import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import LocationInput from '../../components/LocationInput';
 import ProfileAvatar from '../../components/ProfileAvatar';
 
 interface ProfileForm {
   fullName: string;
   email: string;
   phoneNumber: string;
-  location: string;
-  smsOptIn: boolean;
   avatarUrl: string;
 }
 
-export default function CitizenProfile() {
+export default function AgencyProfile() {
   const { t } = useTranslation();
-  const { user, setAuth } = useAuthStore();
+  const { user, setAuth, isAdmin } = useAuthStore();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,6 +22,8 @@ export default function CitizenProfile() {
   const { register, handleSubmit, reset, watch, setValue } = useForm<ProfileForm>({
     defaultValues: { avatarUrl: '' },
   });
+
+  const showProfilePicture = !isAdmin();
 
   useEffect(() => {
     fetchProfile();
@@ -38,12 +37,10 @@ export default function CitizenProfile() {
         fullName: response.data.full_name || '',
         email: response.data.email || '',
         phoneNumber: response.data.phone_number || '',
-        location: response.data.location || '',
-        smsOptIn: response.data.sms_opt_in || false,
         avatarUrl: response.data.avatar_url || '',
       });
-    } catch (error) {
-      console.error('Failed to fetch profile:', error);
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
     }
   };
 
@@ -53,15 +50,17 @@ export default function CitizenProfile() {
     setLoading(true);
 
     try {
-      const response = await api.put('/auth/profile', {
+      const payload: Record<string, any> = {
         full_name: data.fullName || null,
         email: data.email || null,
         phone_number: data.phoneNumber || null,
-        location: data.location || null,
-        sms_opt_in: data.smsOptIn,
-        avatar_url: data.avatarUrl || null,
-      });
-      setSuccess(t('citizen.profileUpdated'));
+      };
+      if (showProfilePicture) {
+        payload.avatar_url = data.avatarUrl || null;
+      }
+
+      const response = await api.put('/auth/profile', payload);
+      setSuccess(t('agency.profileUpdated'));
 
       if (user) {
         const token = useAuthStore.getState().token;
@@ -88,7 +87,7 @@ export default function CitizenProfile() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-8">{t('citizen.profileSettings')}</h1>
+      <h1 className="text-3xl font-bold mb-8">{t('agency.profileSettings')}</h1>
 
       <div className="card">
         {error && (
@@ -104,16 +103,19 @@ export default function CitizenProfile() {
         )}
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          {t('citizen.profileHint')}
+          {t('agency.profileHint')}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <ProfileAvatar
-            avatarUrl={watch('avatarUrl') || ''}
-            onAvatarUrlChange={(url) => setValue('avatarUrl', url)}
-            fullName={watch('fullName') || profile?.full_name}
-            disabled={loading}
-          />
+          {showProfilePicture && (
+            <ProfileAvatar
+              avatarUrl={watch('avatarUrl') || ''}
+              onAvatarUrlChange={(url) => setValue('avatarUrl', url)}
+              fullName={watch('fullName') || profile?.full_name}
+              disabled={loading}
+            />
+          )}
+
           <div>
             <label htmlFor="fullName" className="block text-sm font-medium mb-1">
               {t('auth.fullName')}
@@ -151,29 +153,6 @@ export default function CitizenProfile() {
               className="input"
               placeholder="+250 788 123 456"
             />
-          </div>
-
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium mb-1">
-              {t('citizen.location')}
-            </label>
-            <LocationInput
-              id="location"
-              {...register('location')}
-              placeholder={t('citizen.placeholderLocation')}
-            />
-          </div>
-
-          <div className="flex items-start">
-            <input
-              id="smsOptIn"
-              type="checkbox"
-              {...register('smsOptIn')}
-              className="mt-1 mr-2"
-            />
-            <label htmlFor="smsOptIn" className="text-sm text-gray-700 dark:text-gray-300">
-              {t('citizen.optIn')}
-            </label>
           </div>
 
           <button

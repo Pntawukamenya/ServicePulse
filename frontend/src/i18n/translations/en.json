@@ -270,6 +270,9 @@
     "exportCsv": "Export CSV",
     "serviceHotspots": "Service Hotspots",
     "latestReports": "Latest Reports",
+    "profileSettings": "Profile Settings",
+    "profileHint": "Update your account details.",
+    "profileUpdated": "Profile updated successfully",
     "reg": "REG - Electricity",
     "wasac": "WASAC - Water",
     "emergency": "Emergency Services"
@@ -317,6 +320,14 @@
     "submit": "Submit",
     "submitted": "Submitted",
     "updated": "Updated",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "profilePicture": "Profile Picture",
+    "profilePictureHint": "JPG, PNG, WebP or GIF. Max 5MB.",
+    "upload": "Upload Photo",
+    "uploading": "Uploading...",
+    "uploadInvalidType": "Please select a valid image (JPG, PNG, WebP or GIF).",
+    "uploadTooLarge": "Image must be 5MB or smaller.",
+    "uploadFailed": "Upload failed. Please try again.",
+    "cloudinaryNotConfigured": "Profile photo upload is not configured. Contact your administrator."
   }
 }

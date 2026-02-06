@@ -24,6 +24,7 @@ import CitizenProfile from './pages/citizen/Profile';
 import AgencyDashboard from './pages/agency/Dashboard';
 import AgencyAlerts from './pages/agency/Alerts';
 import AgencyReports from './pages/agency/Reports';
+import AgencyProfile from './pages/agency/Profile';
 
 function App() {
   const { theme, setTheme } = useThemeStore();
@@ -99,6 +100,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin']}>
                 <AgencyReports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agency/profile"
+            element={
+              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin']}>
+                <AgencyProfile />
               </ProtectedRoute>
             }
           />

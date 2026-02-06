@@ -112,6 +112,7 @@ FRONTEND_URL=http://localhost:3000
    - Navigate to SQL Editor
    - Run `backend/supabase-schema.sql` first
    - Then run `backend/supabase-schema-v2.sql` (adds OTP, agency_code, status, etc.)
+   - Run `backend/supabase-migrations/001_add_avatar_url.sql` (adds profile picture support)
 
 5. Start the development server:
 ```bash
@@ -135,7 +136,12 @@ npm install
 3. Create a `.env` file:
 ```bash
 VITE_API_URL=http://localhost:5000/api
+
+# Cloudinary (profile picture uploads) - get from cloudinary.com
+VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
 ```
+Create an unsigned upload preset in Cloudinary: Settings → Upload → Add upload preset → set "Signing Mode" to "Unsigned".
 
 4. Start the development server:
 ```bash

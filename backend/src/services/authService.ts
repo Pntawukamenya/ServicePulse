@@ -229,15 +229,29 @@ export async function loginUser(data: LoginData) {
 }
 
 export async function getUserById(userId: string) {
-  const { data: user, error } = await supabase
+  const columnsWithAvatar = 'id, email, full_name, phone_number, location, role, agency_id, agency_code, sms_opt_in, identifier_type, status, avatar_url, created_at';
+  const columnsWithoutAvatar = 'id, email, full_name, phone_number, location, role, agency_id, agency_code, sms_opt_in, identifier_type, status, created_at';
+
+  let { data: user, error } = await supabase
     .from('users')
-    .select('id, email, full_name, phone_number, location, role, agency_id, agency_code, sms_opt_in, identifier_type, status, created_at')
+    .select(columnsWithAvatar)
     .eq('id', userId)
     .single();
+
+  // If avatar_url column doesn't exist (migration not run), retry without it
+  if (error && (error.message?.includes('avatar_url') || (error as any).code === '42703')) {
+    const result = await supabase
+      .from('users')
+      .select(columnsWithoutAvatar)
+      .eq('id', userId)
+      .single();
+    user = result.data;
+    error = result.error;
+  }
 
   if (error || !user) {
     throw new Error('User not found');
   }
 
-  return user;
+  return { ...user, avatar_url: user.avatar_url ?? null };
 }

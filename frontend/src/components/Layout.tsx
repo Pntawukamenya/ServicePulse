@@ -49,6 +49,7 @@ export default function Layout({ children }: LayoutProps) {
           { to: '/agency/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
           { to: '/agency/alerts', label: t('nav.alerts'), icon: <DASHBOARD_ICONS.AlertIcon /> },
           { to: '/agency/reports', label: t('nav.reports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
+          { to: '/agency/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
         ]}
       >
         {children}
@@ -90,6 +91,9 @@ export default function Layout({ children }: LayoutProps) {
                       </Link>
                       <Link to="/agency/reports" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
                         {t('nav.reports')}
+                      </Link>
+                      <Link to="/agency/profile" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                        {t('nav.profile')}
                       </Link>
                     </>
                   )}

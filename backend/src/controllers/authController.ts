@@ -56,7 +56,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     const { supabase } = await import('../config/database');
-    const { full_name, email, phone_number, location, sms_opt_in } = req.body;
+    const { full_name, email, phone_number, location, sms_opt_in, avatar_url } = req.body;
 
     const updates: Record<string, any> = {};
     if (full_name !== undefined) updates.full_name = full_name;
@@ -64,6 +64,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
     if (phone_number !== undefined) updates.phone_number = phone_number;
     if (location !== undefined) updates.location = location;
     if (sms_opt_in !== undefined) updates.sms_opt_in = sms_opt_in;
+    if (avatar_url !== undefined) updates.avatar_url = avatar_url === '' ? null : avatar_url;
 
     const { data: currentUser } = await supabase.from('users').select('email, phone_number').eq('id', req.userId).single();
     if (currentUser) {
@@ -75,12 +76,20 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       }
     }
 
-    const { data: user, error } = await supabase
+    let { data: user, error } = await supabase
       .from('users')
       .update(updates)
       .eq('id', req.userId)
       .select()
       .single();
+
+    // If avatar_url column doesn't exist, retry without it
+    if (error && (error.message?.includes('avatar_url') || (error as any).code === '42703')) {
+      delete updates.avatar_url;
+      const retry = await supabase.from('users').update(updates).eq('id', req.userId).select().single();
+      user = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       throw new Error(`Failed to update profile: ${error.message}`);
