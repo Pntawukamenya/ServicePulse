@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useAuthStore } from '../../store/authStore';
+import { getServicesByAgency, getServiceLabelKey } from '../../config/services';
+import type { AgencyCode } from '../../config/services';
 
 interface Report {
   id: string;
@@ -19,10 +22,13 @@ interface Report {
 
 export default function AgencyReports() {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const agencyServices = getServicesByAgency((user?.agencyCode as AgencyCode) || 'REG');
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     location: '',
+    serviceType: '',
     status: '',
   });
 
@@ -34,6 +40,7 @@ export default function AgencyReports() {
     try {
       const params = new URLSearchParams();
       if (filters.location) params.append('location', filters.location);
+      if (filters.serviceType) params.append('serviceType', filters.serviceType);
       if (filters.status) params.append('status', filters.status);
 
       const response = await api.get(`/reports/agency?${params.toString()}`);
@@ -92,12 +99,32 @@ export default function AgencyReports() {
     );
   }
 
+  const exportCsv = () => {
+    const headers = ['ID', 'Service', 'Location', 'Status', 'Submitted'];
+    const rows = reports.map((r) => [r.id, r.service_type, r.location, r.status, r.created_at]);
+    const csv = [headers.join(','), ...rows.map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reports-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-8">{t('agency.reportsInbox')}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <h1 className="text-3xl font-bold">{t('agency.reportsInbox')}</h1>
+        {reports.length > 0 && (
+          <button onClick={exportCsv} className="btn btn-outline w-fit">
+            {t('agency.exportCsv')}
+          </button>
+        )}
+      </div>
 
       <div className="card mb-6">
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="locationFilter" className="block text-sm font-medium mb-1">
               {t('agency.filterLocation')}
@@ -110,6 +137,22 @@ export default function AgencyReports() {
               className="input"
               placeholder={t('agency.searchLocation')}
             />
+          </div>
+          <div>
+            <label htmlFor="serviceTypeFilter" className="block text-sm font-medium mb-1">
+              {t('citizen.serviceType')}
+            </label>
+            <select
+              id="serviceTypeFilter"
+              value={filters.serviceType}
+              onChange={(e) => setFilters({ ...filters, serviceType: e.target.value })}
+              className="input"
+            >
+              <option value="">{t('agency.allStatuses')}</option>
+              {agencyServices.map((s) => (
+                <option key={s.code} value={s.code}>{t(s.labelKey)}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="statusFilter" className="block text-sm font-medium mb-1">
@@ -141,7 +184,8 @@ export default function AgencyReports() {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold">{report.service_type}</h3>
+                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400">#{report.id.slice(0, 8).toUpperCase()}</span>
+                    <h3 className="text-lg font-semibold">{getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : report.service_type}</h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
                       {getStatusLabel(report.status)}
                     </span>

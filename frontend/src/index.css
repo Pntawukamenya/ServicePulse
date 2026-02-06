@@ -3,9 +3,21 @@
 @tailwind utilities;
 
 @layer base {
+  /* Standard 'appearance' for compatibility (Tailwind Preflight uses -webkit-appearance) */
+  button,
+  [type='button'],
+  [type='reset'],
+  [type='submit'],
+  ::-webkit-file-upload-button {
+    appearance: button;
+  }
+  [type='search'] {
+    appearance: textfield;
+  }
+
   body {
     @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -41,9 +53,25 @@
   .container-main {
     max-width: 90rem;
     @apply mx-auto;
-    /* Match reference: ~10% viewport margins (8–12% range), like the screenshot */
-    /* 375px → 37px, 768px → 77px, 1280px (Mac 13") → 128px per side */
-    padding-left: min(10vw, 12rem);
-    padding-right: min(10vw, 12rem);
+    /* Small/medium screens: generous side margins for breathing room */
+    padding-left: min(12vw, 8rem);
+    padding-right: min(12vw, 8rem);
+  }
+
+  /* Large screens (1280px+): unchanged - extend content width */
+  @media (min-width: 1280px) {
+    .container-main {
+      max-width: 96rem;
+      padding-left: 4rem;
+      padding-right: 4rem;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .container-main {
+      max-width: 100rem;
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
   }
 }

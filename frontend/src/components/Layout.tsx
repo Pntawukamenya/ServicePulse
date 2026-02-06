@@ -1,16 +1,18 @@
 import { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { useTranslation } from '../i18n/useTranslation';
 import LanguageSwitcher from './LanguageSwitcher';
+import DashboardLayout, { DASHBOARD_ICONS } from './DashboardLayout';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { user, logout, isAuthenticated, isCitizen, isAgency } = useAuthStore();
+  const location = useLocation();
+  const { user, logout, isAuthenticated, isCitizen, isAgency, isAdmin } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -19,6 +21,40 @@ export default function Layout({ children }: LayoutProps) {
     logout();
     navigate('/login');
   };
+
+  const isCitizenDashboard = location.pathname.startsWith('/citizen/');
+  const isAgencyDashboard = location.pathname.startsWith('/agency/');
+
+  if (isCitizenDashboard && isCitizen()) {
+    return (
+      <DashboardLayout
+        roleLabel={t('nav.roleCitizen')}
+        navItems={[
+          { to: '/citizen/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
+          { to: '/citizen/report', label: t('nav.submitReport'), icon: <DASHBOARD_ICONS.ReportIcon /> },
+          { to: '/citizen/reports', label: t('nav.myReports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
+          { to: '/citizen/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
+        ]}
+      >
+        {children}
+      </DashboardLayout>
+    );
+  }
+
+  if (isAgencyDashboard && (isAgency() || isAdmin())) {
+    return (
+      <DashboardLayout
+        roleLabel={t('nav.roleAgency')}
+        navItems={[
+          { to: '/agency/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
+          { to: '/agency/alerts', label: t('nav.alerts'), icon: <DASHBOARD_ICONS.AlertIcon /> },
+          { to: '/agency/reports', label: t('nav.reports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
+        ]}
+      >
+        {children}
+      </DashboardLayout>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

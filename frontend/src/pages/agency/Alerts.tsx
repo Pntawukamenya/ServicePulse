@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useAuthStore } from '../../store/authStore';
+import { getServicesByAgency, getServiceLabelKey } from '../../config/services';
+import type { AgencyCode } from '../../config/services';
+import LocationInput from '@/components/LocationInput';
 
 interface AlertForm {
   serviceType: string;
@@ -23,6 +27,8 @@ interface Notification {
 
 export default function AgencyAlerts() {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const agencyServices = getServicesByAgency((user?.agencyCode as AgencyCode) || 'REG');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -109,9 +115,11 @@ export default function AgencyAlerts() {
                 className="input"
               >
                 <option value="">{t('citizen.selectService')}</option>
-                <option value="REG">{t('agency.reg')}</option>
-                <option value="WASAC">{t('agency.wasac')}</option>
-                <option value="EMERGENCY">{t('agency.emergency')}</option>
+                {agencyServices.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {t(s.labelKey)}
+                  </option>
+                ))}
               </select>
               {errors.serviceType && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.serviceType.message}</p>
@@ -136,11 +144,9 @@ export default function AgencyAlerts() {
               <label htmlFor="location" className="block text-sm font-medium mb-1">
                 {t('citizen.location')} ({t('agency.locationBased').toLowerCase()})
               </label>
-              <input
+              <LocationInput
                 id="location"
-                type="text"
                 {...register('location')}
-                className="input"
                 placeholder={t('agency.placeholderLocation')}
               />
             </div>
@@ -186,7 +192,7 @@ export default function AgencyAlerts() {
               notifications.slice(0, 5).map((notification) => (
                 <div key={notification.id} className="card">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-medium">{notification.service_type}</span>
+                    <span className="text-sm font-medium">{getServiceLabelKey(notification.service_type) ? t(getServiceLabelKey(notification.service_type)!) : notification.service_type}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {formatDate(notification.created_at)}
                     </span>

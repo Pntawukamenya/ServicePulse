@@ -9,7 +9,9 @@
     "alerts": "Amatangazo",
     "reports": "Amaporoporo",
     "logout": "Sohoka",
-    "profile": "Ibisobanuro"
+    "profile": "Ibisobanuro",
+    "roleCitizen": "Umuturage",
+    "roleAgency": "Ishami"
   },
   "home": {
     "title": "ServicePulse",
@@ -31,7 +33,26 @@
     "emergencyDesc": "Amakuru ya Police, RIB, impanuka n'umutekano w'umuryango.",
     "ctaTitle": "Witeguye gutangira?",
     "ctaSubtitle": "Iyandikishe muri ServicePulse ubu ujye uhuza n'imiryango nkenerwa.",
-    "createAccount": "Fungura konti"
+    "createAccount": "Fungura konti",
+    "impactStats": "Ingaruka z'urubuga",
+    "reportsSubmitted": "Amaporoporo yoherejwe",
+    "issuesResolved": "Ibigaragara byasubijwe",
+    "alertsSent": "Amatangazo yoherejwe",
+    "emergencyHotlines": "Nimero z'urugendo rwihuse",
+    "emergencyHotlinesDesc": "Bika izi nimero. Mu bihe by'ingorane:",
+    "policeEmergency": "Polisi",
+    "fireAmbulance": "Umuriro & Ambulance",
+    "regHotline": "REG (Amashanyarazi)",
+    "wasacHotline": "WASAC (Amazi)",
+    "faq": "Ibibazo bisanzwe",
+    "faq1Q": "Ndetse nanjye nohereza ikibazo?",
+    "faq1A": "Iyandikishe kubuntu, ujye ku Ohereza raporo. Hitamo imyiri, ubwoko n'ahantu.",
+    "faq2Q": "Nzakira SMS nta interineti?",
+    "faq2A": "Yego. Hitamo SMS mu bisobanuro.",
+    "faq3Q": "Ntarinze kugeza raporo yasubijwe?",
+    "faq3A": "Imyiri itegereza gusubiza mu ma 24-48.",
+    "faq4Q": "ServicePulse iri mu mahanga?",
+    "faq4A": "ServicePulse yubatswe mu Rwanda mbere."
   },
   "about": {
     "title": "Ibiterekeye ServicePulse",
@@ -168,6 +189,9 @@
     "serviceInfo": "Amakuru y'imiryango",
     "serviceInfoDesc": "Menya amakenga ahantu hawe biciye kuri SMS na rubuga.",
     "report": "Ohereza raporo",
+    "agency": "Imyiri",
+    "selectAgency": "Hitamo imyiri",
+    "agencyRequired": "Nyamuneka hitamo imyiri",
     "serviceType": "Ubwoko bwa serivisi",
     "location": "Ahantu (Umurenge/ Akagari)",
     "sector": "Umurenge (Birakenerwa)",
@@ -238,9 +262,40 @@
     "approve": "Emeza",
     "submitted": "Yoherejwe",
     "searchLocation": "Sokora ahantu...",
+    "exportCsv": "Sohozwa CSV",
+    "serviceHotspots": "Aho amakenga ahuriye",
+    "latestReports": "Amaporoporo yaho",
     "reg": "REG - Amashanyarazi",
     "wasac": "WASAC - Amazi",
     "emergency": "Serivisi zihutira"
+  },
+  "services": {
+    "reg": {
+      "powerOutage": "Guhagarika amashanyarazi",
+      "meterIssue": "Ikosa ku gipimo",
+      "connection": "Gukomatanya/Gukomatanya",
+      "billing": "Ibisabwa",
+      "transformerFault": "Ikosa ku transformer",
+      "loadShedding": "Guhagarika amashanyarazi",
+      "safetyHazard": "Ingorane z'umutekano"
+    },
+    "wasac": {
+      "waterSupply": "Guhagarika amazi",
+      "waterQuality": "Ikosa ku mazi",
+      "pipeBurst": "Kuborogera/gutona umuporosi",
+      "lowPressure": "Gutinda amazi",
+      "connection": "Ikosa ku gukomatanya",
+      "billing": "Ibisabwa",
+      "sewage": "Kuborogera umuyoboro"
+    },
+    "emergency": {
+      "police": "Serivisi z'inkiko",
+      "crime": "Raporo y'icyaha",
+      "fire": "Umuriro",
+      "ambulance": "Ambulansi",
+      "disaster": "Ingorane (Ihefu, ubushohe)",
+      "rib": "Raporo RIB"
+    }
   },
   "common": {
     "required": "birakenerwa",

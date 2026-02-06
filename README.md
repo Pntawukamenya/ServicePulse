@@ -1,35 +1,24 @@
 # ServicePulse
 
-A centralized, multi-channel public service communication and citizen reporting platform for Rwanda. ServicePulse addresses digital access inequality by combining SMS-based notifications (for non-internet users) with web-based dashboards for government agencies and citizens.
+A platform for public service communication and citizen reporting in Rwanda. We combine SMS alerts (for citizens without reliable internet) with web dashboards so agencies and citizens stay connected.
 
-## Project Overview
+If you're reading this, you're probably setting it up, contributing, or grading it. Here’s what you need to know.
 
-ServicePulse is designed as a final-year BSc Software Engineering capstone project, implementing a high-quality functional prototype suitable for:
-- Initial software product demonstration
-- Full-Stack specialization grading
-- Defense presentation
-- Future scalability across East Africa
+## What You Get
 
-## Features
+### Citizens
+- SMS alerts for service disruptions in their area
+- Submit and track reports (REG, WASAC, Emergency)
+- Manage profile and notification preferences
 
-### For Citizens
-- **SMS Alerts**: Receive location-based service disruption notifications via SMS
-- **Service Reporting**: Submit and track service disruption reports
-- **Profile Management**: Manage notification preferences and location settings
-- **Opt-in/Opt-out**: Control SMS alert subscriptions
+### Agencies (REG, WASAC, Emergency Services)
+- Create and send targeted SMS alerts
+- View and manage citizen reports
+- Update status (Received → In Progress → Resolved)
+- See service hotspots and basic analytics
 
-### For Agencies (REG, WASAC, Emergency Services)
-- **Alert Creation**: Create and send targeted SMS notifications
-- **Reports Inbox**: View and manage citizen-submitted reports
-- **Status Tracking**: Update report status (Received → In Progress → Resolved)
-- **Location Clustering**: Identify service hotspots through aggregated data
-- **Dashboard Analytics**: Overview metrics for alerts and reports
-
-### Public Features
-- Clean, government-grade UI/UX
-- Light/Dark theme support
-- Multi-language ready (EN/Kinyarwanda placeholder)
-- Responsive design for all devices
+### Everyone
+- Light/dark theme, multi-language (EN, Kinyarwanda, French), responsive layout
 
 ## Technology Stack
 
@@ -79,16 +68,13 @@ ServicePulse/
 └── README.md
 ```
 
-## Setup Instructions
+## Getting Started
 
-### Prerequisites
-- Node.js 18+ and npm
-- Supabase account and project
-- Twilio account (optional, for SMS - pilot mode works without it)
+You'll need Node.js 18+, a Supabase project, and optionally Twilio for SMS (pilot mode works without it).
 
-### Backend Setup
+### Backend
 
-1. Navigate to the backend directory:
+1. Go to the backend:
 ```bash
 cd backend
 ```
@@ -132,11 +118,11 @@ FRONTEND_URL=http://localhost:3000
 npm run dev
 ```
 
-The backend will run on `http://localhost:5000`
+Backend runs at `http://localhost:5000`.
 
-### Frontend Setup
+### Frontend
 
-1. Navigate to the frontend directory:
+1. Go to the frontend:
 ```bash
 cd frontend
 ```
@@ -156,7 +142,7 @@ VITE_API_URL=http://localhost:5000/api
 npm run dev
 ```
 
-The frontend will run on `http://localhost:3000`
+Frontend runs at `http://localhost:3000`.
 
 ## Database Schema
 
@@ -188,79 +174,60 @@ See `backend/supabase-schema.sql` for the complete schema.
 - `POST /api/notifications` - Create and send alert (agency)
 - `GET /api/notifications/agency` - Get agency notifications (agency)
 
-## Deployment
+## Deploying
 
 ### Backend (Render)
-1. Connect your GitHub repository to Render
-2. Create a new Web Service
-3. Set build command: `npm install && npm run build`
-4. Set start command: `npm start`
-5. Add environment variables from `.env.example`
 
-### Frontend (Netlify/Vercel)
-1. Connect your GitHub repository
-2. Set build command: `cd frontend && npm install && npm run build`
-3. Set publish directory: `frontend/dist`
-4. Add environment variable: `VITE_API_URL` (your backend URL)
+Connect your repo to Render, create a Web Service, and set:
+- Build: `npm install && npm run build`
+- Start: `npm start`
+- Copy env vars from `.env.example`
 
-## SMS Integration
+### Frontend (Vercel)
 
-ServicePulse supports SMS notifications via Twilio. In pilot mode (without Twilio credentials), SMS sending is logged to the console instead of being sent.
+1. Import this repo into Vercel.
+2. Set the **Root Directory** to `frontend`.
+3. Build command: `npm run build`
+4. Output directory: `dist`
+5. Add env var `VITE_API_URL` = your backend URL (e.g. `https://your-app.onrender.com/api`)
 
-To enable full SMS functionality:
-1. Create a Twilio account
-2. Get your Account SID, Auth Token, and Phone Number
-3. Add them to your backend `.env` file
+Vercel will auto-detect the Vite app and run the build. Once deployed, point your backend `FRONTEND_URL` to the Vercel URL.
 
-## Role-Based Access Control
+## SMS (Twilio)
 
-- **Citizen**: Can submit reports, view own reports, manage profile
-- **Agency**: Can create alerts, view reports, update report status
-  - Note: Agency users must have their `agency_id` set in the database to match their agency (REG, WASAC, or Emergency Services)
-- **Admin**: Full access (limited implementation in this phase)
+We use Twilio for SMS. Without credentials, it logs to the console instead of sending. To turn it on: create a Twilio account, grab SID, Auth Token, and phone number, then add them to your backend `.env`.
 
-## Security Features
+## Roles
 
-- JWT-based authentication
-- Password hashing with bcrypt
-- Input validation with express-validator
-- CORS configuration
-- Role-based route protection
-- Secure session handling
+- **Citizen** — Submit reports, view own reports, manage profile
+- **Agency** — Create alerts, view reports, update status. Agency users need `agency_id` set in the DB to match their agency (REG, WASAC, or Emergency)
+- **Admin** — Full access (limited in this phase)
 
-## Troubleshooting
+## Security
 
-### "Could not find the 'agency_code' column" error
-Your database is missing the v2 schema. Run `backend/supabase-schema-v2.sql` in the Supabase SQL Editor (Dashboard → SQL Editor). This adds `agency_code`, `identifier_type`, `status`, the `otp_verifications` table, and related columns.
+JWT auth, bcrypt passwords, express-validator for inputs, CORS, role-based routes, secure sessions.
 
-### Backend errors
-API errors are logged to the backend terminal with the route and error message for easier debugging.
+## If Something Breaks
 
-## Development Notes
+**"Could not find the 'agency_code' column"** — Run `backend/supabase-schema-v2.sql` in Supabase (SQL Editor). That adds the v2 schema.
 
-- The application uses TypeScript for type safety
-- All API responses follow consistent error handling patterns
-- Frontend uses React Hook Form for form validation
-- Zustand provides lightweight state management
-- Tailwind CSS ensures consistent, responsive styling
+**Backend errors** — Check the backend terminal; we log the route and message there.
 
-## Future Enhancements
+## Notes for Contributors
 
-- Advanced analytics and reporting
-- Automated response systems
-- Multi-language support (Kinyarwanda)
-- Mobile app development
-- National-scale deployment
-- Integration with additional service providers
+- TypeScript throughout
+- React Hook Form + Zustand on the frontend
+- Tailwind for styling
+- API errors follow a consistent format
+
+## Roadmap
+
+More analytics, automated responses, full Kinyarwanda support, mobile app, and national-scale deployment when we're ready.
 
 ## License
 
-This project is developed as a capstone project for academic purposes.
-
-## Contact
-
-For questions or support, please contact through the platform or your local service agency.
+Capstone project — academic use.
 
 ---
 
-**ServicePulse** - Bridging the digital divide, one alert at a time.
+**ServicePulse** — Bridging the digital divide, one alert at a time.

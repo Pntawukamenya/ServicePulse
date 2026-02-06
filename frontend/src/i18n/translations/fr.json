@@ -9,7 +9,9 @@
     "alerts": "Alertes",
     "reports": "Rapports",
     "logout": "Déconnexion",
-    "profile": "Profil"
+    "profile": "Profil",
+    "roleCitizen": "Citoyen",
+    "roleAgency": "Agence"
   },
   "home": {
     "title": "ServicePulse",
@@ -31,7 +33,26 @@
     "emergencyDesc": "Communications Police, RIB, Catastrophes et Sécurité publique.",
     "ctaTitle": "Prêt à commencer?",
     "ctaSubtitle": "Rejoignez ServicePulse et restez connecté aux services publics essentiels.",
-    "createAccount": "Créer un compte"
+    "createAccount": "Créer un compte",
+    "impactStats": "Impact de la plateforme",
+    "reportsSubmitted": "Rapports soumis",
+    "issuesResolved": "Problèmes résolus",
+    "alertsSent": "Alertes envoyées",
+    "emergencyHotlines": "Lignes d'urgence",
+    "emergencyHotlinesDesc": "Enregistrez ces numéros. En cas d'urgence, appelez directement:",
+    "policeEmergency": "Police – Urgence",
+    "fireAmbulance": "Pompiers & Ambulance",
+    "regHotline": "REG (Électricité)",
+    "wasacHotline": "WASAC (Eau)",
+    "faq": "Questions fréquentes",
+    "faq1Q": "Comment signaler un problème?",
+    "faq1A": "Inscrivez-vous gratuitement, puis allez à Soumettre un rapport. Choisissez l'agence (REG, WASAC ou Urgence), sélectionnez le type de service, indiquez le lieu et la description.",
+    "faq2Q": "Recevrai-je des alertes SMS sans internet?",
+    "faq2A": "Oui. Optez pour les alertes SMS dans votre profil. Vous recevrez des notifications géolocalisées même sur téléphone basique.",
+    "faq3Q": "Combien de temps avant résolution?",
+    "faq3A": "Les agences visent une réponse sous 24–48h. Suivez le statut (Reçu → En cours → Résolu) dans Mes rapports.",
+    "faq4Q": "ServicePulse est-il disponible hors Rwanda?",
+    "faq4A": "ServicePulse est conçu pour le Rwanda d'abord, avec une architecture prête pour l'Afrique de l'Est."
   },
   "about": {
     "title": "À propos de ServicePulse",
@@ -168,6 +189,9 @@
     "serviceInfo": "Informations sur les services",
     "serviceInfoDesc": "Restez informé des perturbations de services via les alertes SMS et le tableau de bord web.",
     "report": "Soumettre un rapport",
+    "agency": "Agence",
+    "selectAgency": "Sélectionner une agence",
+    "agencyRequired": "Veuillez sélectionner une agence",
     "serviceType": "Type de service",
     "location": "Localisation (Secteur/Cellule)",
     "sector": "Secteur (Optionnel)",
@@ -238,9 +262,40 @@
     "approve": "Approuver",
     "submitted": "Soumis",
     "searchLocation": "Rechercher un lieu...",
+    "exportCsv": "Exporter CSV",
+    "serviceHotspots": "Points chauds",
+    "latestReports": "Derniers rapports",
     "reg": "REG - Électricité",
     "wasac": "WASAC - Eau",
     "emergency": "Services d'urgence"
+  },
+  "services": {
+    "reg": {
+      "powerOutage": "Coupure de courant",
+      "meterIssue": "Problème de compteur",
+      "connection": "Connexion/Réconnection",
+      "billing": "Facturation",
+      "transformerFault": "Panne de transformateur",
+      "loadShedding": "Délestage",
+      "safetyHazard": "Risque de sécurité"
+    },
+    "wasac": {
+      "waterSupply": "Pénurie d'eau",
+      "waterQuality": "Problème de qualité d'eau",
+      "pipeBurst": "Fuite/Canalisation",
+      "lowPressure": "Basse pression",
+      "connection": "Problème de connexion",
+      "billing": "Facturation",
+      "sewage": "Égout/Caniveau bloqué"
+    },
+    "emergency": {
+      "police": "Urgence police",
+      "crime": "Déclaration de crime",
+      "fire": "Incendie",
+      "ambulance": "Ambulance",
+      "disaster": "Catastrophe (Inondation, Glissement)",
+      "rib": "Rapport RIB"
+    }
   },
   "common": {
     "required": "est requis",

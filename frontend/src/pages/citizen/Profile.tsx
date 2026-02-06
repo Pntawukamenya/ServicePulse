@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
+import LocationInput from '../../components/LocationInput';
 
 interface ProfileForm {
   fullName: string;
@@ -19,7 +20,7 @@ export default function CitizenProfile() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfileForm>();
+  const { register, handleSubmit, reset } = useForm<ProfileForm>();
 
   useEffect(() => {
     fetchProfile();
@@ -144,11 +145,10 @@ export default function CitizenProfile() {
             <label htmlFor="location" className="block text-sm font-medium mb-1">
               {t('citizen.location')}
             </label>
-            <input
+            <LocationInput
               id="location"
-              type="text"
               {...register('location')}
-              className="input"
+              placeholder={t('citizen.placeholderLocation')}
             />
           </div>
 

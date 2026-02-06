@@ -62,17 +62,22 @@ export async function getReportsByAgency(agencyId: string, filters?: { serviceTy
     throw new Error('Invalid agency');
   }
 
+  // Match reports for this agency: service_type = REG|WASAC|EMERGENCY or starts with agency code (e.g. REG_POWER_OUTAGE)
   let query = supabase
     .from('reports')
     .select(`
       *,
       users:user_id (full_name, phone_number, email)
     `)
-    .eq('service_type', agencyCode)
+    .or(`service_type.eq.${agencyCode},service_type.ilike.${agencyCode}_%`)
     .order('created_at', { ascending: false });
 
   if (filters?.location) {
     query = query.ilike('location', `%${filters.location}%`);
+  }
+
+  if (filters?.serviceType) {
+    query = query.eq('service_type', filters.serviceType);
   }
 
   if (filters?.status) {
@@ -118,7 +123,7 @@ export async function getReportClusters(agencyId: string) {
   const { data: reports, error } = await supabase
     .from('reports')
     .select('location, sector, cell, service_type')
-    .eq('service_type', agencyCode);
+    .or(`service_type.eq.${agencyCode},service_type.ilike.${agencyCode}_%`);
 
   if (error) {
     throw new Error(`Failed to fetch clusters: ${error.message}`);

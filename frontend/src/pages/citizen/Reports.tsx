@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
+import { getServiceLabelKey } from '../../config/services';
 
 interface Report {
   id: string;
@@ -13,10 +14,16 @@ interface Report {
   updated_at?: string;
 }
 
+function getReportId(id: string) {
+  return `#SP-${id.slice(0, 8).toUpperCase()}`;
+}
+
 export default function CitizenReports() {
   const { t } = useTranslation();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'status'>('newest');
 
   useEffect(() => {
     fetchReports();
@@ -32,6 +39,25 @@ export default function CitizenReports() {
       setLoading(false);
     }
   };
+
+  const filteredAndSorted = useMemo(() => {
+    let list = [...reports];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((r) =>
+        r.description.toLowerCase().includes(q) ||
+        r.location.toLowerCase().includes(q) ||
+        r.service_type.toLowerCase().includes(q)
+      );
+    }
+    list.sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      const order = { resolved: 0, in_progress: 1, received: 2 };
+      return (order[a.status as keyof typeof order] ?? 3) - (order[b.status as keyof typeof order] ?? 3);
+    });
+    return list;
+  }, [reports, search, sortBy]);
 
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
@@ -73,22 +99,49 @@ export default function CitizenReports() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold mb-8">{t('citizen.myReports')}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <h1 className="text-3xl font-bold">{t('citizen.myReports')}</h1>
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="search"
+            placeholder="Search reports..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input max-w-xs"
+          />
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="input w-auto">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="status">By status</option>
+          </select>
+        </div>
+      </div>
 
       {reports.length === 0 ? (
         <div className="card text-center py-12">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </div>
           <p className="text-gray-600 dark:text-gray-400 mb-4">{t('citizen.noReports')}</p>
           <Link to="/citizen/report" className="btn btn-primary">
             {t('citizen.submitFirst')}
           </Link>
         </div>
+      ) : filteredAndSorted.length === 0 ? (
+        <div className="card text-center py-12">
+          <p className="text-gray-600 dark:text-gray-400 mb-4">No reports match your search. Try different keywords.</p>
+          <button onClick={() => setSearch('')} className="btn btn-outline">Clear search</button>
+        </div>
       ) : (
         <div className="space-y-4">
-          {reports.map((report) => (
+          {filteredAndSorted.map((report) => (
             <div key={report.id} className="card">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold mb-1">{report.service_type}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400">{getReportId(report.id)}</span>
+                    <h3 className="text-lg font-semibold">{getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : report.service_type}</h3>
+                  </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{report.location}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>

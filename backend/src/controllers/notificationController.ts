@@ -5,11 +5,19 @@ import {
   getNotificationsByAgency,
 } from '../services/notificationService';
 import { logError } from '../utils/logger';
+import { isValidServiceForAgency } from '../config/services';
+import type { AgencyCode } from '../config/services';
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userAgencyId) {
+    if (!req.userAgencyId || !req.userAgencyCode) {
       res.status(403).json({ error: 'Agency access required' });
+      return;
+    }
+
+    const { serviceType } = req.body;
+    if (!isValidServiceForAgency(serviceType, req.userAgencyCode as AgencyCode)) {
+      res.status(403).json({ error: 'Invalid service type for your agency' });
       return;
     }
 

@@ -9,7 +9,9 @@
     "alerts": "Alerts",
     "reports": "Reports",
     "logout": "Logout",
-    "profile": "Profile"
+    "profile": "Profile",
+    "roleCitizen": "Citizen",
+    "roleAgency": "Agency"
   },
   "home": {
     "title": "ServicePulse",
@@ -31,7 +33,26 @@
     "emergencyDesc": "Police, RIB, Disaster & Public Safety communications.",
     "ctaTitle": "Ready to get started?",
     "ctaSubtitle": "Join ServicePulse today and stay connected with essential public services.",
-    "createAccount": "Create Account"
+    "createAccount": "Create Account",
+    "impactStats": "Platform Impact",
+    "reportsSubmitted": "Reports Submitted",
+    "issuesResolved": "Issues Resolved",
+    "alertsSent": "Alerts Sent",
+    "emergencyHotlines": "Emergency Hotlines",
+    "emergencyHotlinesDesc": "Save these numbers. In case of emergency, call directly:",
+    "policeEmergency": "Police Emergency",
+    "fireAmbulance": "Fire & Ambulance",
+    "regHotline": "REG (Electricity)",
+    "wasacHotline": "WASAC (Water)",
+    "faq": "Frequently Asked Questions",
+    "faq1Q": "How do I report a service issue?",
+    "faq1A": "Register for free, then go to Submit Report. Choose the agency (REG, WASAC, or Emergency), select the service type, enter location and description. Your report will be tracked until resolution.",
+    "faq2Q": "Will I get SMS alerts without internet?",
+    "faq2A": "Yes. Opt-in to SMS alerts in your profile. You'll receive location-based notifications for service disruptions even on basic mobile phones.",
+    "faq3Q": "How long until my report is resolved?",
+    "faq3A": "Agencies aim to respond within 24–48 hours. You can track status (Received → In Progress → Resolved) in My Reports.",
+    "faq4Q": "Is ServicePulse available outside Rwanda?",
+    "faq4A": "ServicePulse is built for Rwanda first, with architecture designed for expansion across East Africa."
   },
   "about": {
     "title": "About ServicePulse",
@@ -167,7 +188,12 @@
     "manageProfile": "Manage Profile",
     "serviceInfo": "Service Information",
     "serviceInfoDesc": "Stay informed about service disruptions in your area through SMS alerts and the web dashboard.",
+    "recentReports": "Recent Reports",
+    "resolutionRate": "Resolution Rate",
     "report": "Submit Service Report",
+    "agency": "Agency",
+    "selectAgency": "Select an agency",
+    "agencyRequired": "Please select an agency",
     "serviceType": "Service Type",
     "location": "Location (Sector/Cell)",
     "sector": "Sector (Optional)",
@@ -238,9 +264,40 @@
     "approve": "Approve",
     "submitted": "Submitted",
     "searchLocation": "Search location...",
+    "exportCsv": "Export CSV",
+    "serviceHotspots": "Service Hotspots",
+    "latestReports": "Latest Reports",
     "reg": "REG - Electricity",
     "wasac": "WASAC - Water",
     "emergency": "Emergency Services"
+  },
+  "services": {
+    "reg": {
+      "powerOutage": "Power Outage",
+      "meterIssue": "Meter Malfunction",
+      "connection": "Connection/Reconnection",
+      "billing": "Billing Inquiry",
+      "transformerFault": "Transformer Fault",
+      "loadShedding": "Load Shedding",
+      "safetyHazard": "Safety Hazard"
+    },
+    "wasac": {
+      "waterSupply": "Water Supply Disruption",
+      "waterQuality": "Water Quality Issue",
+      "pipeBurst": "Pipe Burst/Leak",
+      "lowPressure": "Low/No Water Pressure",
+      "connection": "Connection Issue",
+      "billing": "Billing",
+      "sewage": "Sewage/Drainage Blockage"
+    },
+    "emergency": {
+      "police": "Police Emergency",
+      "crime": "Crime Report",
+      "fire": "Fire Emergency",
+      "ambulance": "Medical/Ambulance",
+      "disaster": "Disaster (Flood, Landslide)",
+      "rib": "RIB Report (Fraud, Investigation)"
+    }
   },
   "common": {
     "required": "is required",

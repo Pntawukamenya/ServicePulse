@@ -32,7 +32,7 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center bg-gradient-to-b from-primary-50/50 to-transparent dark:from-primary-950/20 dark:to-transparent">
-      <div className="w-full max-w-3xl mx-auto container-main py-8 sm:py-12">
+      <div className="w-full max-w-lg mx-auto px-6 sm:px-8 lg:px-12 py-8 sm:py-12">
         <div className="auth-card">
           <div className="mb-6">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('auth.resetPasswordTitle')}</h1>
