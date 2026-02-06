@@ -1,9 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import { useTranslation } from '../i18n/useTranslation';
 import LanguageSwitcher from './LanguageSwitcher';
+import api from '../lib/api';
 
 interface NavItem {
   to: string;
@@ -60,10 +61,18 @@ function getInitials(name: string): string {
 }
 
 export default function DashboardLayout({ children, navItems, roleLabel }: DashboardLayoutProps) {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUserAvatar } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !user.avatarUrl) {
+      api.get('/auth/profile').then((res) => {
+        if (res.data?.avatar_url) updateUserAvatar(res.data.avatar_url);
+      }).catch(() => {});
+    }
+  }, [user?.id, user?.avatarUrl, updateUserAvatar]);
 
   const handleLogout = () => {
     logout();
@@ -146,10 +155,14 @@ export default function DashboardLayout({ children, navItems, roleLabel }: Dashb
                 </p>
               </div>
               <div
-                className="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-sm shrink-0"
+                className="w-9 h-9 rounded-full overflow-hidden bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-sm shrink-0"
                 title={user?.fullName || user?.email}
               >
-                {getInitials(user?.fullName || user?.email || user?.phoneNumber || '?')}
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  getInitials(user?.fullName || user?.email || user?.phoneNumber || '?')
+                )}
               </div>
               <button
                 onClick={handleLogout}

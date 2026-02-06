@@ -120,7 +120,21 @@ export default function Layout({ children }: LayoutProps) {
               </button>
               <LanguageSwitcher />
               {isAuthenticated() ? (
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-xs shrink-0">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      (() => {
+                        const n = user?.fullName || user?.email || user?.phoneNumber || '?';
+                        if (!n || n.trim() === '') return '?';
+                        const parts = n.trim().split(/\s+/);
+                        return parts.length >= 2
+                          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                          : n.slice(0, 2).toUpperCase();
+                      })()
+                    )}
+                  </div>
                   <span className="text-sm text-gray-700 dark:text-gray-300">{user?.fullName}</span>
                   <button onClick={handleLogout} className="btn btn-outline text-sm">
                     {t('nav.logout')}

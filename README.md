@@ -112,7 +112,7 @@ FRONTEND_URL=http://localhost:3000
    - Navigate to SQL Editor
    - Run `backend/supabase-schema.sql` first
    - Then run `backend/supabase-schema-v2.sql` (adds OTP, agency_code, status, etc.)
-   - Run `backend/supabase-migrations/001_add_avatar_url.sql` (adds profile picture support)
+   - Run `backend/supabase-migrations/001_add_avatar_url.sql` (adds `avatar_url` column for Cloudinary profile pictures)
 
 5. Start the development server:
 ```bash

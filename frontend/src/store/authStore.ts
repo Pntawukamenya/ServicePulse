@@ -9,12 +9,14 @@ interface User {
   role: string;
   agencyId?: string;
   agencyCode?: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthState {
   user: User | null;
   token: string | null;
   setAuth: (user: User, token: string) => void;
+  updateUserAvatar: (avatarUrl: string | null) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
   isCitizen: () => boolean;
@@ -31,6 +33,13 @@ export const useAuthStore = create<AuthState>()(
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
         set({ user, token });
+      },
+      updateUserAvatar: (avatarUrl) => {
+        const current = get().user;
+        if (!current) return;
+        const updated = { ...current, avatarUrl };
+        localStorage.setItem('user', JSON.stringify(updated));
+        set({ user: updated });
       },
       logout: () => {
         localStorage.removeItem('token');

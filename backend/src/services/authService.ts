@@ -183,6 +183,7 @@ function formatUser(user: any) {
     role: user.role,
     agencyId: user.agency_id,
     agencyCode: user.agency_code,
+    avatarUrl: user.avatar_url ?? null,
   };
 }
 

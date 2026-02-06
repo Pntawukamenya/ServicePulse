@@ -14,7 +14,7 @@ interface ProfileForm {
 
 export default function AgencyProfile() {
   const { t } = useTranslation();
-  const { user, setAuth, isAdmin } = useAuthStore();
+  const { user, setAuth, updateUserAvatar, isAdmin } = useAuthStore();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,12 +33,16 @@ export default function AgencyProfile() {
     try {
       const response = await api.get('/auth/profile');
       setProfile(response.data);
+      const avatarUrl = response.data.avatar_url || '';
       reset({
         fullName: response.data.full_name || '',
         email: response.data.email || '',
         phoneNumber: response.data.phone_number || '',
-        avatarUrl: response.data.avatar_url || '',
+        avatarUrl,
       });
+      if (response.data.avatar_url && user) {
+        updateUserAvatar(response.data.avatar_url);
+      }
     } catch (err) {
       console.error('Failed to fetch profile:', err);
     }
@@ -66,7 +70,7 @@ export default function AgencyProfile() {
         const token = useAuthStore.getState().token;
         if (token) {
           const displayName = response.data.full_name || response.data.email || response.data.phone_number;
-          setAuth({ ...user, fullName: displayName, email: response.data.email, phoneNumber: response.data.phone_number }, token);
+          setAuth({ ...user, fullName: displayName, email: response.data.email, phoneNumber: response.data.phone_number, avatarUrl: response.data.avatar_url ?? user.avatarUrl }, token);
         }
       }
       fetchProfile();
@@ -111,6 +115,16 @@ export default function AgencyProfile() {
             <ProfileAvatar
               avatarUrl={watch('avatarUrl') || ''}
               onAvatarUrlChange={(url) => setValue('avatarUrl', url)}
+              onAvatarUploaded={async (url) => {
+                try {
+                  await api.put('/auth/profile', { avatar_url: url });
+                  updateUserAvatar(url);
+                  setSuccess(t('agency.profileUpdated'));
+                  fetchProfile();
+                } catch {
+                  setError(t('common.updateProfileFailed'));
+                }
+              }}
               fullName={watch('fullName') || profile?.full_name}
               disabled={loading}
             />

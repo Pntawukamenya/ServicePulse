@@ -5,6 +5,7 @@ import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
 interface ProfileAvatarProps {
   avatarUrl: string | null;
   onAvatarUrlChange: (url: string) => void;
+  onAvatarUploaded?: (url: string) => Promise<void>;
   fullName?: string;
   disabled?: boolean;
 }
@@ -12,7 +13,7 @@ interface ProfileAvatarProps {
 const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp,image/gif';
 const MAX_SIZE_MB = 5;
 
-export default function ProfileAvatar({ avatarUrl, onAvatarUrlChange, fullName, disabled }: ProfileAvatarProps) {
+export default function ProfileAvatar({ avatarUrl, onAvatarUrlChange, onAvatarUploaded, fullName, disabled }: ProfileAvatarProps) {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -52,6 +53,9 @@ export default function ProfileAvatar({ avatarUrl, onAvatarUrlChange, fullName, 
     try {
       const url = await uploadToCloudinary(file);
       onAvatarUrlChange(url);
+      if (onAvatarUploaded) {
+        await onAvatarUploaded(url);
+      }
     } catch (err: any) {
       setUploadError(err.message || t('common.uploadFailed'));
     } finally {
