@@ -16,6 +16,9 @@
   "home": {
     "title": "ServicePulse",
     "subtitle": "Reliant les citoyens aux services publics essentiels à travers le Rwanda.",
+    "subtitleLine1": "Reliant les citoyens aux",
+    "subtitleLine2": "services publics essentiels",
+    "subtitleLine3": "à travers le Rwanda.",
     "getStarted": "Commencer",
     "learnMore": "En savoir plus",
     "smsAlerts": "Alertes SMS",

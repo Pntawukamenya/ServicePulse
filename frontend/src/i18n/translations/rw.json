@@ -16,6 +16,9 @@
   "home": {
     "title": "ServicePulse",
     "subtitle": "Ihuzanya abaturage n'imiryango nkenerwa biciye mu Rwanda.",
+    "subtitleLine1": "Ihuzanya abaturage",
+    "subtitleLine2": "n'imiryango nkenerwa",
+    "subtitleLine3": "biciye mu Rwanda.",
     "getStarted": "Tangira",
     "learnMore": "Menya byinshi",
     "smsAlerts": "Amatangazo ya SMS",

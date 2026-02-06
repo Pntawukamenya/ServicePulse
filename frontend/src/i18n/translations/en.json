@@ -16,6 +16,9 @@
   "home": {
     "title": "ServicePulse",
     "subtitle": "Connecting citizens with essential public services across Rwanda.",
+    "subtitleLine1": "Connecting citizens with",
+    "subtitleLine2": "essential public services",
+    "subtitleLine3": "across Rwanda.",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
     "smsAlerts": "SMS Alerts",

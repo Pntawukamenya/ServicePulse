@@ -40,8 +40,10 @@ export default function Home() {
             <div className="mb-8 flex justify-center">
               <span className="inline-block w-12 h-1 rounded-full bg-primary-600 dark:bg-primary-400" aria-hidden />
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-tight mb-10 bg-gradient-to-r from-gray-900 via-primary-700 to-primary-600 dark:from-white dark:via-primary-200 dark:to-primary-400 bg-clip-text text-transparent" style={{ fontWeight: 900 }}>
-              {t('home.subtitle')}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.12] mb-10 bg-gradient-to-r from-gray-900 via-primary-700 to-primary-600 dark:from-white dark:via-primary-200 dark:to-primary-400 bg-clip-text text-transparent [text-shadow:0_2px_20px_rgba(45,108,180,0.12)] dark:[text-shadow:0_2px_24px_rgba(99,179,237,0.15)]" style={{ fontWeight: 900 }}>
+              <span className="block">{t('home.subtitleLine1')}</span>
+              <span className="block">{t('home.subtitleLine2')}</span>
+              <span className="block tracking-wide">{t('home.subtitleLine3')}</span>
             </h1>
             <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6">
               <Link
