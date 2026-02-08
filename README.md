@@ -4,6 +4,8 @@ A platform for public service communication and citizen reporting in Rwanda. We 
 
 If you're reading this, you're probably setting it up, contributing, or grading it. Here’s what you need to know.
 
+### Figma UI Design: [Clear Here](https://www.figma.com/design/WEQG4skoJu6RYiSC52fGiw/ServicePulse?node-id=0-1&t=VzV5uPCiElCJPwD2-1)
+
 ## What You Get
 
 ### Citizens
