@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/database';
+import Report from '../models/Report';
+import Notification from '../models/Notification';
 
 /**
  * Public stats for landing page - no auth required
@@ -7,15 +8,11 @@ import { supabase } from '../config/database';
  */
 export async function getPublicStats(_req: Request, res: Response): Promise<void> {
   try {
-    const [reportsRes, notificationsRes, resolvedRes] = await Promise.all([
-      supabase.from('reports').select('*', { count: 'exact', head: true }),
-      supabase.from('notifications').select('*', { count: 'exact', head: true }),
-      supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
+    const [totalReports, totalAlerts, resolvedReports] = await Promise.all([
+      Report.countDocuments(),
+      Notification.countDocuments(),
+      Report.countDocuments({ status: 'resolved' }),
     ]);
-
-    const totalReports = reportsRes.count ?? 0;
-    const totalAlerts = notificationsRes.count ?? 0;
-    const resolvedReports = resolvedRes.count ?? 0;
 
     res.json({
       totalReports,

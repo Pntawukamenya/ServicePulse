@@ -82,7 +82,7 @@ function App() {
           <Route
             path="/agency/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin']}>
+              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
                 <AgencyDashboard />
               </ProtectedRoute>
             }
@@ -90,7 +90,7 @@ function App() {
           <Route
             path="/agency/alerts"
             element={
-              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin']}>
+              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
                 <AgencyAlerts />
               </ProtectedRoute>
             }
@@ -98,7 +98,7 @@ function App() {
           <Route
             path="/agency/reports"
             element={
-              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin']}>
+              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
                 <AgencyReports />
               </ProtectedRoute>
             }
@@ -106,7 +106,7 @@ function App() {
           <Route
             path="/agency/profile"
             element={
-              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin']}>
+              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
                 <AgencyProfile />
               </ProtectedRoute>
             }

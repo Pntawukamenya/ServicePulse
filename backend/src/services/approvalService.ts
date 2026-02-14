@@ -1,41 +1,42 @@
-import { supabase } from '../config/database';
+import User from '../models/User';
+import Agency from '../models/Agency';
 
 export async function getPendingApprovals(agencyCode: string) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('id, email, phone_number, full_name, created_at')
-    .eq('role', 'agency_employee')
-    .eq('agency_code', agencyCode)
-    .eq('status', 'pending_approval')
-    .order('created_at', { ascending: false });
+  const users = await User.find({
+    role: 'agency_employee',
+    agency_code: agencyCode,
+    status: 'pending_approval',
+  })
+    .select('email phone_number full_name created_at')
+    .sort({ created_at: -1 })
+    .lean();
 
-  if (error) throw new Error(error.message);
-  return data || [];
+  return users.map((u) => ({
+    ...u,
+    id: u._id.toString(),
+  }));
 }
 
 export async function approveUser(userId: string, approverId: string, agencyCode: string) {
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, agency_code, status')
-    .eq('id', userId)
-    .single();
-
+  const user = await User.findById(userId).select('agency_code status').lean();
   if (!user || user.agency_code !== agencyCode || user.status !== 'pending_approval') {
     throw new Error('User not found or not pending approval');
   }
 
-  const { data, error } = await supabase
-    .from('users')
-    .update({
-      status: 'active',
-      approved_by: approverId,
-      approved_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', userId)
-    .select()
-    .single();
+  const agency = await Agency.findOne({ code: agencyCode }).select('_id').lean();
+  const updates: Record<string, any> = {
+    status: 'active',
+    approved_by: approverId,
+    approved_at: new Date(),
+  };
+  if (agency) updates.agency_id = agency._id;
 
-  if (error) throw new Error(error.message);
-  return data;
+  const updated = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true }).lean();
+
+  if (!updated) throw new Error('Failed to approve user');
+  return {
+    ...updated,
+    id: updated._id.toString(),
+    agency_id: updated.agency_id?.toString(),
+  };
 }

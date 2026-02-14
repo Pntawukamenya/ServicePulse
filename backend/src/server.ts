@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import routes from './routes';
 import { errorHandler, notFound } from './middleware/errorHandler';
-import { supabase } from './config/database';
+import { connectDB } from './config/database';
 
 dotenv.config();
 
@@ -30,21 +30,23 @@ app.use('/api', routes);
 app.use(notFound);
 app.use(errorHandler);
 
-async function logStartupStatus() {
-  const env = process.env.NODE_ENV || 'development';
-  console.log('\n--- ServicePulse Backend ---');
-  console.log(`Server:  OK  (port ${PORT}, ${env})`);
+async function startServer() {
   try {
-    const { error } = await supabase.from('users').select('id').limit(1);
-    console.log(`DB:      ${error ? 'ERROR' : 'OK'}  (Supabase)`);
-    if (error) console.error(`         ${error.message}`);
+    await connectDB();
+    const env = process.env.NODE_ENV || 'development';
+    console.log('\n--- ServicePulse Backend ---');
+    console.log(`Server:  OK  (port ${PORT}, ${env})`);
+    console.log('DB:      OK  (MongoDB)');
+    console.log('----------------------------\n');
   } catch (err: any) {
-    console.log('DB:      ERROR  (Supabase)');
+    console.error('\n--- ServicePulse Backend ---');
+    console.log(`Server:  OK  (port ${PORT})`);
+    console.log('DB:      ERROR  (MongoDB)');
     console.error(`         ${err?.message || err}`);
+    console.log('----------------------------\n');
   }
-  console.log('----------------------------\n');
+
+  app.listen(PORT);
 }
 
-app.listen(PORT, () => {
-  logStartupStatus();
-});
+startServer();

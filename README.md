@@ -34,7 +34,7 @@ If you're reading this, you're probably setting it up, contributing, or grading 
 ### Backend
 - **Node.js** with Express
 - **TypeScript** for type safety
-- **Supabase** (PostgreSQL) for database
+- **MongoDB** with Mongoose for database
 - **JWT** for authentication
 - **Twilio** for SMS integration (pilot mode)
 - **bcryptjs** for password hashing
@@ -70,7 +70,7 @@ ServicePulse/
 
 ## Getting Started
 
-You'll need Node.js 18+, a Supabase project, and optionally Twilio for SMS (pilot mode works without it).
+You'll need Node.js 18+, MongoDB (local or Atlas), and optionally Twilio for SMS (pilot mode works without it).
 
 ### Backend
 
@@ -84,35 +84,22 @@ cd backend
 npm install
 ```
 
-3. Create a `.env` file (copy from `.env.example`):
+3. Create a `.env` file (copy from `backend/.env.example`). **Required for backend:**
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `MONGODB_URI` | MongoDB connection string (required) | `mongodb://localhost:27017/servicepulse` or `mongodb+srv://user:pass@cluster.mongodb.net/servicepulse` |
+| `JWT_SECRET` | Secret for signing JWTs (required) | Any long random string |
+| `JWT_EXPIRES_IN` | Token expiry | `7d` |
+| `TWILIO_ACCOUNT_SID` | Twilio SID (optional, SMS) | From twilio.com |
+| `TWILIO_AUTH_TOKEN` | Twilio token (optional) | From twilio.com |
+| `TWILIO_PHONE_NUMBER` | Twilio number (optional) | e.g. `+1234567890` |
+| `FRONTEND_URL` | CORS origin | `http://localhost:3000` |
+
+4. Seed the database (creates REG, WASAC, Emergency agencies):
 ```bash
-PORT=5000
-NODE_ENV=development
-
-# Supabase
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_KEY=your_supabase_service_key
-
-# JWT
-JWT_SECRET=your_jwt_secret_key_change_in_production
-JWT_EXPIRES_IN=7d
-
-# SMS Provider (Twilio) - Optional for pilot mode
-TWILIO_ACCOUNT_SID=your_twilio_account_sid
-TWILIO_AUTH_TOKEN=your_twilio_auth_token
-TWILIO_PHONE_NUMBER=your_twilio_phone_number
-
-# Frontend URL
-FRONTEND_URL=http://localhost:3000
+npm run seed
 ```
-
-4. Set up the database:
-   - Go to your Supabase project dashboard
-   - Navigate to SQL Editor
-   - Run `backend/supabase-schema.sql` first
-   - Then run `backend/supabase-schema-v2.sql` (adds OTP, agency_code, status, etc.)
-   - Run `backend/supabase-migrations/001_add_avatar_url.sql` (adds `avatar_url` column for Cloudinary profile pictures)
 
 5. Start the development server:
 ```bash
@@ -150,16 +137,14 @@ npm run dev
 
 Frontend runs at `http://localhost:3000`.
 
-## Database Schema
+## Database Schema (MongoDB)
 
-The database includes the following tables:
-- **users**: User accounts with role-based access
-- **agencies**: Government service agencies (REG, WASAC, Emergency)
-- **services**: Service types per agency
+Collections:
+- **users**: User accounts with role-based access (citizen, agency_employee, agency_admin, admin)
+- **agencies**: Government service agencies (REG, WASAC, Emergency) – seed with `npm run seed`
 - **reports**: Citizen-submitted service disruption reports
 - **notifications**: SMS alerts sent by agencies
-
-See `backend/supabase-schema.sql` for the complete schema.
+- **otpverifications**: OTP codes for citizen registration
 
 ## API Endpoints
 

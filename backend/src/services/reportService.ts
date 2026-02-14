@@ -1,4 +1,5 @@
-import { supabase } from '../config/database';
+import Report from '../models/Report';
+import User from '../models/User';
 import { getAgencyCode } from './agencyService';
 
 export interface CreateReportData {
@@ -16,123 +17,123 @@ export interface UpdateReportStatusData {
   agencyId: string;
 }
 
+function mapReport(doc: any) {
+  const r = doc.toObject ? doc.toObject() : doc;
+  return {
+    ...r,
+    id: r._id?.toString() || r.id,
+    user_id: r.user_id?.toString() || r.user_id,
+  };
+}
+
 export async function createReport(data: CreateReportData) {
   const { userId, serviceType, location, description, sector, cell } = data;
 
-  const { data: report, error } = await supabase
-    .from('reports')
-    .insert({
-      user_id: userId,
-      service_type: serviceType,
-      location,
-      sector: sector || null,
-      cell: cell || null,
-      description,
-      status: 'received',
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+  const report = await Report.create({
+    user_id: userId,
+    service_type: serviceType,
+    location,
+    sector: sector || null,
+    cell: cell || null,
+    description,
+    status: 'received',
+  });
 
-  if (error) {
-    throw new Error(`Failed to create report: ${error.message}`);
-  }
-
-  return report;
+  return mapReport(report);
 }
 
 export async function getReportsByUser(userId: string) {
-  const { data: reports, error } = await supabase
-    .from('reports')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+  const reports = await Report.find({ user_id: userId })
+    .sort({ created_at: -1 })
+    .lean();
 
-  if (error) {
-    throw new Error(`Failed to fetch reports: ${error.message}`);
-  }
-
-  return reports || [];
+  return reports.map((r) => ({
+    ...r,
+    id: r._id.toString(),
+    user_id: r.user_id?.toString(),
+  }));
 }
 
 export async function getReportsByAgency(agencyId: string, filters?: { serviceType?: string; location?: string; status?: string }) {
-  // Get agency code from agency ID
   const agencyCode = await getAgencyCode(agencyId);
   if (!agencyCode) {
     throw new Error('Invalid agency');
   }
 
-  // Match reports for this agency: service_type = REG|WASAC|EMERGENCY or starts with agency code (e.g. REG_POWER_OUTAGE)
-  let query = supabase
-    .from('reports')
-    .select(`
-      *,
-      users:user_id (full_name, phone_number, email)
-    `)
-    .or(`service_type.eq.${agencyCode},service_type.ilike.${agencyCode}_%`)
-    .order('created_at', { ascending: false });
+  const query: Record<string, any> = {
+    $or: [
+      { service_type: agencyCode },
+      { service_type: new RegExp(`^${agencyCode}_`, 'i') },
+    ],
+  };
 
   if (filters?.location) {
-    query = query.ilike('location', `%${filters.location}%`);
+    query.location = new RegExp(filters.location, 'i');
   }
-
   if (filters?.serviceType) {
-    query = query.eq('service_type', filters.serviceType);
+    query.service_type = filters.serviceType;
   }
-
   if (filters?.status) {
-    query = query.eq('status', filters.status);
+    query.status = filters.status;
   }
 
-  const { data: reports, error } = await query;
+  const reports = await Report.find(query)
+    .populate('user_id', 'full_name phone_number email')
+    .sort({ created_at: -1 })
+    .lean();
 
-  if (error) {
-    throw new Error(`Failed to fetch reports: ${error.message}`);
-  }
-
-  return reports || [];
+  return reports.map((r) => {
+    const u = (r as any).user_id;
+    const users = u
+      ? { full_name: u.full_name, phone_number: u.phone_number, email: u.email }
+      : { full_name: null, phone_number: null, email: null };
+    return {
+      ...r,
+      id: (r as any)._id.toString(),
+      user_id: u?._id?.toString() || (r as any).user_id?.toString(),
+      users,
+    };
+  });
 }
 
 export async function updateReportStatus(data: UpdateReportStatusData) {
-  const { reportId, status, agencyId } = data;
+  const { reportId, status } = data;
 
-  const { data: report, error } = await supabase
-    .from('reports')
-    .update({
-      status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', reportId)
-    .select()
-    .single();
+  const report = await Report.findByIdAndUpdate(
+    reportId,
+    { $set: { status } },
+    { new: true }
+  ).lean();
 
-  if (error) {
-    throw new Error(`Failed to update report: ${error.message}`);
+  if (!report) {
+    throw new Error(`Failed to update report: ${reportId}`);
   }
 
-  return report;
+  return {
+    ...report,
+    id: report._id.toString(),
+    user_id: report.user_id?.toString(),
+  };
 }
 
 export async function getReportClusters(agencyId: string) {
-  // Get agency code from agency ID
   const agencyCode = await getAgencyCode(agencyId);
   if (!agencyCode) {
     throw new Error('Invalid agency');
   }
 
-  const { data: reports, error } = await supabase
-    .from('reports')
-    .select('location, sector, cell, service_type')
-    .or(`service_type.eq.${agencyCode},service_type.ilike.${agencyCode}_%`);
+  const reports = await Report.find({
+    $or: [
+      { service_type: agencyCode },
+      { service_type: new RegExp(`^${agencyCode}_`, 'i') },
+    ],
+  })
+    .select('location sector cell service_type')
+    .lean();
 
-  if (error) {
-    throw new Error(`Failed to fetch clusters: ${error.message}`);
-  }
-
-  // Simple clustering by location
   const clusters: Record<string, number> = {};
-  reports?.forEach((report) => {
-    const key = report.location || 'Unknown';
+  reports.forEach((r) => {
+    const key = (r as any).location || 'Unknown';
     clusters[key] = (clusters[key] || 0) + 1;
   });
 

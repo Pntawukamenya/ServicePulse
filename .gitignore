@@ -13,7 +13,9 @@ build/
 !.env.example
 *.pem
 *.key
-ADMIN-CREDENTIALS.md
+*credentials*
+*CREDENTIALS*
+*.secret
 
 # Logs & debug
 *.log

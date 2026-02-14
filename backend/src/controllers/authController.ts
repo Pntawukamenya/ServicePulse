@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { registerUser, loginUser, verifyOtpAndLogin, getUserById } from '../services/authService';
 import { AuthRequest } from '../middleware/auth';
 import { logError } from '../utils/logger';
+import User from '../models/User';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -55,18 +56,9 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { supabase } = await import('../config/database');
     const { full_name, email, phone_number, location, sms_opt_in, avatar_url } = req.body;
 
-    const updates: Record<string, any> = {};
-    if (full_name !== undefined) updates.full_name = full_name;
-    if (email !== undefined) updates.email = email;
-    if (phone_number !== undefined) updates.phone_number = phone_number;
-    if (location !== undefined) updates.location = location;
-    if (sms_opt_in !== undefined) updates.sms_opt_in = sms_opt_in;
-    if (avatar_url !== undefined) updates.avatar_url = avatar_url === '' ? null : avatar_url;
-
-    const { data: currentUser } = await supabase.from('users').select('email, phone_number').eq('id', req.userId).single();
+    const currentUser = await User.findById(req.userId).select('email phone_number').lean();
     if (currentUser) {
       const newEmail = email !== undefined ? email : currentUser.email;
       const newPhone = phone_number !== undefined ? phone_number : currentUser.phone_number;
@@ -76,26 +68,30 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       }
     }
 
-    let { data: user, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', req.userId)
-      .select()
-      .single();
+    const updates: Record<string, any> = {};
+    if (full_name !== undefined) updates.full_name = full_name;
+    if (email !== undefined) updates.email = email;
+    if (phone_number !== undefined) updates.phone_number = phone_number;
+    if (location !== undefined) updates.location = location;
+    if (sms_opt_in !== undefined) updates.sms_opt_in = sms_opt_in;
+    if (avatar_url !== undefined) updates.avatar_url = avatar_url === '' ? null : avatar_url;
 
-    // If avatar_url column doesn't exist, retry without it
-    if (error && (error.message?.includes('avatar_url') || (error as any).code === '42703')) {
-      delete updates.avatar_url;
-      const retry = await supabase.from('users').update(updates).eq('id', req.userId).select().single();
-      user = retry.data;
-      error = retry.error;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { $set: updates },
+      { new: true }
+    ).lean();
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
     }
 
-    if (error) {
-      throw new Error(`Failed to update profile: ${error.message}`);
-    }
-
-    res.status(200).json(user);
+    res.status(200).json({
+      ...user,
+      id: user._id.toString(),
+      agency_id: user.agency_id?.toString() || user.agency_id,
+    });
   } catch (error: any) {
     logError(req, error.message, error);
     res.status(400).json({ error: error.message });

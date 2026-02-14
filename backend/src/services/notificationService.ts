@@ -1,4 +1,5 @@
-import { supabase } from '../config/database';
+import Notification from '../models/Notification';
+import User from '../models/User';
 import { sendSMS } from '../config/sms';
 import { sendEmail } from '../config/email';
 
@@ -13,53 +14,36 @@ export interface CreateNotificationData {
 export async function createNotification(data: CreateNotificationData) {
   const { agencyId, serviceType, location, message, targetAudience } = data;
 
-  // Create notification record
-  const { data: notification, error } = await supabase
-    .from('notifications')
-    .insert({
-      agency_id: agencyId,
-      service_type: serviceType,
-      location: location || null,
-      message,
-      target_audience: targetAudience,
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+  const notification = await Notification.create({
+    agency_id: agencyId,
+    service_type: serviceType,
+    location: location || null,
+    message,
+    target_audience: targetAudience,
+  });
 
-  if (error) {
-    throw new Error(`Failed to create notification: ${error.message}`);
-  }
-
-  // Get target users (citizens who opted in for SMS or have email)
-  let query = supabase
-    .from('users')
-    .select('id, email, phone_number, sms_opt_in, location')
-    .eq('role', 'citizen');
-
+  let query: Record<string, any> = { role: 'citizen' };
   if (targetAudience === 'location_based' && location) {
-    query = query.ilike('location', `%${location}%`);
+    query.location = new RegExp(location, 'i');
   }
 
-  const { data: users, error: usersError } = await query;
+  const users = await User.find(query)
+    .select('email phone_number sms_opt_in')
+    .lean();
 
-  if (usersError) {
-    console.error('Error fetching users for notification:', usersError);
-    return notification;
-  }
-
+  let deliveryCount = 0;
   if (users && users.length > 0) {
-    const smsPromises = users.map((user) => {
-      if (user.phone_number && user.sms_opt_in) {
-        return sendSMS(user.phone_number, message);
+    const smsPromises = users.map((u) => {
+      if (u.phone_number && u.sms_opt_in) {
+        return sendSMS(u.phone_number, message);
       }
       return Promise.resolve({ success: false, error: 'User not eligible for SMS' });
     });
 
-    const emailPromises = users.map((user) => {
-      if (user.email) {
+    const emailPromises = users.map((u) => {
+      if (u.email) {
         return sendEmail({
-          to: user.email,
+          to: u.email,
           subject: `ServicePulse Alert: ${serviceType}`,
           text: message,
         });
@@ -72,32 +56,33 @@ export async function createNotification(data: CreateNotificationData) {
       Promise.allSettled(emailPromises),
     ]);
 
-    const smsSuccessful = smsResults.filter((r) => r.status === 'fulfilled' && r.value.success).length;
-    const emailSuccessful = emailResults.filter((r) => r.status === 'fulfilled' && r.value.success).length;
+    const smsSuccessful = smsResults.filter((r: any) => r.status === 'fulfilled' && r.value?.success).length;
+    const emailSuccessful = emailResults.filter((r: any) => r.status === 'fulfilled' && r.value?.success).length;
+    deliveryCount = smsSuccessful + emailSuccessful;
     console.log(`Notification sent: ${smsSuccessful} SMS, ${emailSuccessful} emails to ${users.length} users`);
 
-    await supabase
-      .from('notifications')
-      .update({
-        delivery_count: smsSuccessful + emailSuccessful,
-        total_recipients: users.length,
-      })
-      .eq('id', notification.id);
+    await Notification.updateOne(
+      { _id: notification._id },
+      { $set: { delivery_count: deliveryCount, total_recipients: users.length } }
+    );
   }
 
-  return notification;
+  const updated = await Notification.findById(notification._id).lean();
+  return {
+    ...updated,
+    id: updated!._id.toString(),
+    agency_id: (updated as any).agency_id?.toString(),
+  };
 }
 
 export async function getNotificationsByAgency(agencyId: string) {
-  const { data: notifications, error } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('agency_id', agencyId)
-    .order('created_at', { ascending: false });
+  const notifications = await Notification.find({ agency_id: agencyId })
+    .sort({ created_at: -1 })
+    .lean();
 
-  if (error) {
-    throw new Error(`Failed to fetch notifications: ${error.message}`);
-  }
-
-  return notifications || [];
+  return notifications.map((n) => ({
+    ...n,
+    id: (n as any)._id.toString(),
+    agency_id: (n as any).agency_id?.toString(),
+  }));
 }

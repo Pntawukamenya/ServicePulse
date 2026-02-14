@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { supabase } from '../config/database';
+import User from '../models/User';
+import OtpVerification from '../models/OtpVerification';
 import { generateToken } from '../utils/jwt';
 import { sendSMS } from '../config/sms';
 import { sendEmail } from '../config/email';
@@ -52,6 +53,21 @@ async function sendOtpToIdentifier(identifier: string, identifierType: Identifie
   }
 }
 
+function formatUser(user: any) {
+  const u = user.toObject ? user.toObject() : user;
+  const displayName = u.full_name || u.email || u.phone_number;
+  return {
+    id: u._id?.toString() || u.id,
+    email: u.email,
+    fullName: displayName,
+    phoneNumber: u.phone_number,
+    role: u.role,
+    agencyId: u.agency_id?.toString() || u.agency_id,
+    agencyCode: u.agency_code,
+    avatarUrl: u.avatar_url ?? null,
+  };
+}
+
 export async function registerUser(data: RegisterData) {
   const { identifier, identifierType, password, role, agencyCode, termsAccepted } = data;
 
@@ -62,48 +78,37 @@ export async function registerUser(data: RegisterData) {
   const email = identifierType === 'email' ? identifier.trim().toLowerCase() : null;
   const phoneNumber = identifierType === 'phone' ? normalizePhone(identifier) : null;
 
-  // Check if user exists
-  let existingQuery = supabase.from('users').select('id');
-  if (email) existingQuery = existingQuery.eq('email', email);
-  else existingQuery = existingQuery.eq('phone_number', phoneNumber);
-  const { data: existingUser } = await existingQuery.single();
+  const existingUser = await User.findOne(
+    email ? { email } : { phone_number: phoneNumber! }
+  ).lean();
 
   if (existingUser) {
     throw new Error(identifierType === 'email' ? 'User with this email already exists' : 'User with this phone number already exists');
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
-
   const status = role === 'citizen' ? 'pending_otp' : 'pending_approval';
-  const { data: user, error } = await supabase
-    .from('users')
-    .insert({
-      email: email,
-      phone_number: phoneNumber,
-      password_hash: hashedPassword,
-      full_name: null,
-      identifier_type: identifierType,
-      role: role,
-      agency_code: agencyCode || null,
-      status,
-      terms_accepted: true,
-      created_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
 
-  if (error) {
-    throw new Error(`Registration failed: ${error.message}`);
-  }
+  const user = await User.create({
+    email,
+    phone_number: phoneNumber,
+    password_hash: hashedPassword,
+    full_name: null,
+    identifier_type: identifierType,
+    role,
+    agency_code: agencyCode || null,
+    status,
+    terms_accepted: true,
+  });
 
   if (role === 'citizen') {
     const otp = generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    await supabase.from('otp_verifications').insert({
-      identifier: identifierType === 'email' ? email : phoneNumber,
+    await OtpVerification.create({
+      identifier: (identifierType === 'email' ? email : phoneNumber)!,
       identifier_type: identifierType,
       otp_code: otp,
-      expires_at: expiresAt.toISOString(),
+      expires_at: expiresAt,
     });
     await sendOtpToIdentifier(identifier, identifierType, otp);
     return {
@@ -127,34 +132,28 @@ export async function verifyOtpAndLogin(data: VerifyOtpData) {
   const phoneNumber = identifierType === 'phone' ? normalizePhone(identifier) : null;
   const lookupId = email || phoneNumber;
 
-  const { data: otpRecord } = await supabase
-    .from('otp_verifications')
-    .select('*')
-    .eq('identifier', lookupId)
-    .eq('identifier_type', identifierType)
-    .eq('otp_code', otp)
-    .is('used_at', null)
-    .gte('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .single();
+  const otpRecord = await OtpVerification.findOne({
+    identifier: lookupId,
+    identifier_type: identifierType,
+    otp_code: otp,
+    used_at: null,
+    expires_at: { $gte: new Date() },
+  }).sort({ created_at: -1 }).lean();
 
   if (!otpRecord) {
     throw new Error('Invalid or expired verification code');
   }
 
-  await supabase
-    .from('otp_verifications')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', otpRecord.id);
+  await OtpVerification.updateOne(
+    { _id: otpRecord._id },
+    { $set: { used_at: new Date() } }
+  );
 
-  const { data: user } = await supabase
-    .from('users')
-    .update({ status: 'active' })
-    .eq(identifierType === 'email' ? 'email' : 'phone_number', lookupId)
-    .eq('status', 'pending_otp')
-    .select()
-    .single();
+  const user = await User.findOneAndUpdate(
+    identifierType === 'email' ? { email: lookupId } : { phone_number: lookupId },
+    { $set: { status: 'active' } },
+    { new: true }
+  );
 
   if (!user) {
     throw new Error('Verification failed');
@@ -163,27 +162,13 @@ export async function verifyOtpAndLogin(data: VerifyOtpData) {
   const token = generateToken({
     userId: user.id,
     role: user.role,
-    agencyId: user.agency_id || undefined,
+    agencyId: user.agency_id?.toString(),
     agencyCode: user.agency_code || undefined,
   });
 
   return {
     user: formatUser(user),
     token,
-  };
-}
-
-function formatUser(user: any) {
-  const displayName = user.full_name || user.email || user.phone_number;
-  return {
-    id: user.id,
-    email: user.email,
-    fullName: displayName,
-    phoneNumber: user.phone_number,
-    role: user.role,
-    agencyId: user.agency_id,
-    agencyCode: user.agency_code,
-    avatarUrl: user.avatar_url ?? null,
   };
 }
 
@@ -194,12 +179,11 @@ export async function loginUser(data: LoginData) {
   const email = isEmail ? identifier.trim().toLowerCase() : null;
   const phoneNumber = !isEmail ? normalizePhone(identifier) : null;
 
-  let query = supabase.from('users').select('*');
-  if (email) query = query.eq('email', email);
-  else query = query.eq('phone_number', phoneNumber);
-  const { data: user, error } = await query.single();
+  const user = await User.findOne(
+    email ? { email } : { phone_number: phoneNumber }
+  );
 
-  if (error || !user) {
+  if (!user) {
     throw new Error('Invalid identifier or password');
   }
 
@@ -219,7 +203,7 @@ export async function loginUser(data: LoginData) {
   const token = generateToken({
     userId: user.id,
     role: user.role,
-    agencyId: user.agency_id || undefined,
+    agencyId: user.agency_id?.toString(),
     agencyCode: user.agency_code || undefined,
   });
 
@@ -230,29 +214,17 @@ export async function loginUser(data: LoginData) {
 }
 
 export async function getUserById(userId: string) {
-  const columnsWithAvatar = 'id, email, full_name, phone_number, location, role, agency_id, agency_code, sms_opt_in, identifier_type, status, avatar_url, created_at';
-  const columnsWithoutAvatar = 'id, email, full_name, phone_number, location, role, agency_id, agency_code, sms_opt_in, identifier_type, status, created_at';
+  const user = await User.findById(userId)
+    .select('email full_name phone_number location role agency_id agency_code sms_opt_in identifier_type status avatar_url created_at')
+    .lean();
 
-  let { data: user, error } = await supabase
-    .from('users')
-    .select(columnsWithAvatar)
-    .eq('id', userId)
-    .single();
-
-  // If avatar_url column doesn't exist (migration not run), retry without it
-  if (error && (error.message?.includes('avatar_url') || (error as any).code === '42703')) {
-    const result = await supabase
-      .from('users')
-      .select(columnsWithoutAvatar)
-      .eq('id', userId)
-      .single();
-    user = result.data;
-    error = result.error;
-  }
-
-  if (error || !user) {
+  if (!user) {
     throw new Error('User not found');
   }
 
-  return { ...user, avatar_url: user.avatar_url ?? null };
+  return {
+    ...user,
+    id: user._id.toString(),
+    agency_id: user.agency_id?.toString() || user.agency_id,
+  };
 }
