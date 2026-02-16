@@ -116,6 +116,30 @@ export async function updateReportStatus(data: UpdateReportStatusData) {
   };
 }
 
+export async function deleteReport(reportId: string, userId: string, userRole: string, userAgencyId?: string): Promise<void> {
+  const report = await Report.findById(reportId).lean();
+  if (!report) {
+    throw new Error('Report not found');
+  }
+  if (userRole === 'citizen') {
+    if (report.user_id?.toString() !== userId) {
+      throw new Error('You can only delete your own reports');
+    }
+  } else if (['agency_admin', 'super_admin', 'agency', 'admin'].includes(userRole)) {
+    if (userRole !== 'super_admin' && userAgencyId) {
+      const agencyCode = await getAgencyCode(userAgencyId);
+      const reportService = (report as any).service_type || '';
+      const belongsToAgency = agencyCode && (reportService === agencyCode || reportService.startsWith(agencyCode + '_'));
+      if (!belongsToAgency) {
+        throw new Error('You can only delete reports for your agency');
+      }
+    }
+  } else {
+    throw new Error('Insufficient permissions to delete reports');
+  }
+  await Report.findByIdAndDelete(reportId);
+}
+
 export async function getReportClusters(agencyId: string) {
   const agencyCode = await getAgencyCode(agencyId);
   if (!agencyCode) {

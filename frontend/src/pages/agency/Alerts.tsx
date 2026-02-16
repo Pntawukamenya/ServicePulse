@@ -93,15 +93,11 @@ export default function AgencyAlerts() {
           <h2 className="text-xl font-semibold mb-4">{t('agency.newAlert')}</h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-              {error}
-            </div>
+            <div className="mb-4 alert-error">{error}</div>
           )}
 
           {success && (
-            <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-              {success}
-            </div>
+            <div className="mb-4 alert-success">{success}</div>
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -122,7 +118,7 @@ export default function AgencyAlerts() {
                 ))}
               </select>
               {errors.serviceType && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.serviceType.message}</p>
+                <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.serviceType.message}</p>
               )}
             </div>
 
@@ -167,7 +163,7 @@ export default function AgencyAlerts() {
                 placeholder={t('agency.placeholderMessage')}
               />
               {errors.message && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.message.message}</p>
+                <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.message.message}</p>
               )}
             </div>
 

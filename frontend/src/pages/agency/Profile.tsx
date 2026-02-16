@@ -4,6 +4,7 @@ import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import ProfileAvatar from '../../components/ProfileAvatar';
+import ChangePasswordForm from '../../components/ChangePasswordForm';
 
 interface ProfileForm {
   fullName: string;
@@ -90,20 +91,17 @@ export default function AgencyProfile() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold mb-8">{t('agency.profileSettings')}</h1>
 
-      <div className="card">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="card">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-            {error}
-          </div>
+          <div className="mb-4 alert-error">{error}</div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 text-sm">
-            {success}
-          </div>
+          <div className="mb-4 alert-success">{success}</div>
         )}
 
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
@@ -177,6 +175,15 @@ export default function AgencyProfile() {
             {loading ? t('common.saving') : t('common.save')}
           </button>
         </form>
+        </div>
+
+        <div className="card">
+          <h2 className="text-xl font-semibold mb-4">{t('auth.changePassword')}</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+            {t('auth.changePasswordHint')}
+          </p>
+          <ChangePasswordForm disabled={loading} />
+        </div>
       </div>
     </div>
   );

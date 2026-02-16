@@ -70,14 +70,11 @@ export default function AgencyReports() {
     return map[status] || status;
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'resolved':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      default:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'resolved': return 'badge-success';
+      case 'in_progress': return 'badge-info';
+      default: return 'badge-warning';
     }
   };
 
@@ -94,7 +91,10 @@ export default function AgencyReports() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">{t('common.loading')}</div>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+          <span className="ml-3 text-neutral-500">{t('common.loading')}</span>
+        </div>
       </div>
     );
   }
@@ -123,7 +123,7 @@ export default function AgencyReports() {
         )}
       </div>
 
-      <div className="card mb-6">
+      <div className="card card-flat mb-6">
         <div className="grid md:grid-cols-3 gap-4">
           <div>
             <label htmlFor="locationFilter" className="block text-sm font-medium mb-1">
@@ -186,7 +186,7 @@ export default function AgencyReports() {
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-xs font-mono text-gray-500 dark:text-gray-400">#{report.id.slice(0, 8).toUpperCase()}</span>
                     <h3 className="text-lg font-semibold">{getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : report.service_type}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
+                    <span className={`${getStatusBadge(report.status)}`}>
                       {getStatusLabel(report.status)}
                     </span>
                   </div>

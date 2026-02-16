@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 @layer base {
-  /* Standard 'appearance' for compatibility (Tailwind Preflight uses -webkit-appearance) */
   button,
   [type='button'],
   [type='reset'],
@@ -15,50 +14,142 @@
     appearance: textfield;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 antialiased;
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-neutral-50 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100 antialiased;
+    font-family: 'DM Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, .h1 {
+    @apply text-h1 font-bold text-neutral-900 dark:text-white tracking-tight;
+  }
+
+  h2, .h2 {
+    @apply text-h2 font-semibold text-neutral-900 dark:text-white;
+  }
+
+  h3, .h3 {
+    @apply text-h3 font-semibold text-neutral-900 dark:text-white;
+  }
+
+  p {
+    @apply text-body text-neutral-600 dark:text-neutral-400 leading-relaxed;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl font-medium text-sm
+      transition-all duration-200 ease-out
+      focus:outline-none focus:ring-2 focus:ring-offset-2
+      disabled:opacity-60 disabled:cursor-not-allowed disabled:pointer-events-none;
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus:ring-primary-500;
+    @apply btn bg-primary-600 text-white
+      hover:bg-primary-700 hover:shadow-md hover:shadow-primary-500/20 active:bg-primary-800
+      focus:ring-primary-500;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 focus:ring-gray-500;
+    @apply btn bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-100
+      hover:bg-neutral-300 dark:hover:bg-neutral-600
+      focus:ring-neutral-400;
   }
 
   .btn-outline {
-    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:border-primary-400 dark:text-primary-400 dark:hover:bg-primary-900/20 focus:ring-primary-500 transition-colors;
+    @apply btn border-2 border-primary-600 text-primary-600 dark:border-primary-500 dark:text-primary-400
+      hover:bg-primary-50 dark:hover:bg-primary-950/30
+      focus:ring-primary-500;
+  }
+
+  .btn-ghost {
+    @apply btn text-neutral-700 dark:text-neutral-300
+      hover:bg-neutral-100 dark:hover:bg-neutral-800;
   }
 
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100;
+    @apply w-full px-4 py-3 rounded-xl
+      border border-neutral-300 dark:border-neutral-600
+      bg-white dark:bg-neutral-800 dark:text-neutral-100
+      text-neutral-900 placeholder:text-neutral-400
+      transition-all duration-200
+      focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500
+      disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .input-error {
+    @apply input border-error-500 focus:ring-error-500/30 focus:border-error-500;
   }
 
   .card {
-    @apply bg-white rounded-xl border border-gray-100 dark:bg-gray-800 dark:border-gray-700 p-6 transition-shadow hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/10;
+    @apply bg-white dark:bg-neutral-900 rounded-2xl
+      border border-neutral-100 dark:border-neutral-800
+      shadow-card
+      p-6
+      transition-all duration-300
+      hover:shadow-card-hover hover:border-neutral-200 dark:hover:border-neutral-700;
+  }
+
+  .card-flat {
+    @apply bg-white dark:bg-neutral-900 rounded-2xl
+      border border-neutral-100 dark:border-neutral-800
+      p-6;
   }
 
   .auth-card {
-    @apply bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-md dark:shadow-lg p-6 sm:p-8 w-full;
+    @apply bg-white dark:bg-neutral-900 rounded-2xl
+      border border-neutral-200 dark:border-neutral-800
+      shadow-xl dark:shadow-2xl dark:shadow-black/20
+      p-6 sm:p-8 w-full;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-400;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-500;
+  }
+
+  .badge-info {
+    @apply badge bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400;
+  }
+
+  .alert-error {
+    @apply p-4 rounded-xl bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800
+      text-error-700 dark:text-error-400 text-sm;
+  }
+
+  .alert-success {
+    @apply p-4 rounded-xl bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800
+      text-success-700 dark:text-success-500 text-sm;
   }
 
   .container-main {
     max-width: 90rem;
     @apply mx-auto;
-    /* Small/medium screens: generous side margins for breathing room */
-    padding-left: min(12vw, 8rem);
-    padding-right: min(12vw, 8rem);
+    padding-left: min(6vw, 4rem);
+    padding-right: min(6vw, 4rem);
   }
 
-  /* Large screens (1280px+): unchanged - extend content width */
+  @media (min-width: 1024px) {
+    .container-main {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+
   @media (min-width: 1280px) {
     .container-main {
       max-width: 96rem;
@@ -70,8 +161,24 @@
   @media (min-width: 1536px) {
     .container-main {
       max-width: 100rem;
-      padding-left: 3rem;
-      padding-right: 3rem;
+      padding-left: 4rem;
+      padding-right: 4rem;
     }
+  }
+}
+
+/* Loading spinner */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-spin-slow {
+    animation: spin 1s linear infinite;
   }
 }

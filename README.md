@@ -23,7 +23,7 @@ If you're reading this, you're probably setting it up, contributing, or grading 
 - See service hotspots and basic analytics
 
 ### Everyone
-- Light/dark theme, multi-language (EN, Kinyarwanda, French), responsive layout
+- Light/dark theme, multi-language (EN, Kin, Fre), responsive layout
 
 ## Technology Stack
 
@@ -57,8 +57,8 @@ ServicePulse/
 │   │   ├── routes/          # API routes
 │   │   ├── services/        # Business logic
 │   │   ├── utils/           # JWT utilities
+│   │   ├── scripts/         # Seed script
 │   │   └── server.ts        # Express server entry point
-│   ├── supabase-schema.sql  # Database schema
 │   └── package.json
 ├── frontend/
 │   ├── src/
@@ -156,12 +156,16 @@ Collections:
 ### Authentication
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - User login
+- `POST /api/auth/forgot-password` - Request password reset (sends OTP via email/SMS)
+- `POST /api/auth/reset-password` - Reset password with OTP (identifier, otp, newPassword, confirmNewPassword)
+- `PUT /api/auth/change-password` - Change password (protected: oldPassword, newPassword, confirmNewPassword)
 - `GET /api/auth/profile` - Get user profile (protected)
 - `PUT /api/auth/profile` - Update user profile (protected)
 
 ### Reports
 - `POST /api/reports` - Create new report (citizen)
 - `GET /api/reports/my-reports` - Get user's reports (citizen)
+- `DELETE /api/reports/:id` - Delete report (citizen: own only; agency: own agency)
 - `GET /api/reports/agency` - Get agency reports (agency)
 - `PUT /api/reports/:id/status` - Update report status (agency)
 - `GET /api/reports/agency/clusters` - Get location clusters (agency)
@@ -202,12 +206,6 @@ We use Twilio for SMS. Without credentials, it logs to the console instead of se
 ## Security
 
 JWT auth, bcrypt passwords, express-validator for inputs, CORS, role-based routes, secure sessions.
-
-## If Something Breaks
-
-**"Could not find the 'agency_code' column"** — Run `backend/supabase-schema-v2.sql` in Supabase (SQL Editor). That adds the v2 schema.
-
-**Backend errors** — Check the backend terminal; we log the route and message there.
 
 ## Notes for Contributors
 

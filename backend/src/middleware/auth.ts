@@ -8,7 +8,14 @@ export interface AuthRequest extends Request {
   userAgencyCode?: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_change_in_production';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error('JWT_SECRET must be set in .env (min 32 characters)');
+  }
+  return secret;
+}
+const JWT_SECRET = getJwtSecret();
 
 /**
  * Verify JWT token and attach user info to request
@@ -19,9 +26,13 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const authHeader = req.headers.authorization ?? req.headers.Authorization;
+    const token = (typeof authHeader === 'string' ? authHeader : authHeader?.[0])?.replace(/^Bearer\s+/i, '');
 
     if (!token) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[auth] 401: No token provided for', req.method, req.path);
+      }
       res.status(401).json({ error: 'Authentication required' });
       return;
     }
@@ -35,6 +46,9 @@ export const authenticate = async (
 
     next();
   } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[auth] 401: Invalid/expired token for', req.method, req.path, (error as Error).message);
+    }
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 };

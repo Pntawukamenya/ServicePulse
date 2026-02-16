@@ -1,11 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import routes from './routes';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { connectDB } from './config/database';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -38,15 +36,14 @@ async function startServer() {
     console.log(`Server:  OK  (port ${PORT}, ${env})`);
     console.log('DB:      OK  (MongoDB)');
     console.log('----------------------------\n');
+    app.listen(PORT);
   } catch (err: any) {
     console.error('\n--- ServicePulse Backend ---');
-    console.log(`Server:  OK  (port ${PORT})`);
-    console.log('DB:      ERROR  (MongoDB)');
+    console.error('DB:      ERROR  (MongoDB)');
     console.error(`         ${err?.message || err}`);
-    console.log('----------------------------\n');
+    console.error('Server:  NOT STARTED (database connection required)\n');
+    process.exit(1);
   }
-
-  app.listen(PORT);
 }
 
 startServer();

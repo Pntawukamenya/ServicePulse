@@ -3,11 +3,11 @@ import mongoose from 'mongoose';
 const reportSchema = new mongoose.Schema(
   {
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    service_type: { type: String, required: true },
-    location: { type: String, required: true },
-    sector: { type: String, default: null },
-    cell: { type: String, default: null },
-    description: { type: String, required: true },
+    service_type: { type: String, required: true, trim: true, maxlength: 50 },
+    location: { type: String, required: true, trim: true, maxlength: 500 },
+    sector: { type: String, default: null, trim: true, maxlength: 100 },
+    cell: { type: String, default: null, trim: true, maxlength: 50 },
+    description: { type: String, required: true, trim: true, minlength: 10, maxlength: 2000 },
     status: {
       type: String,
       enum: ['received', 'in_progress', 'resolved'],

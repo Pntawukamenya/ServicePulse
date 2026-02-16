@@ -7,7 +7,7 @@ export default function Terms() {
     <div className="container-main py-12">
       <h1 className="text-4xl font-bold mb-8">{t('terms.title')}</h1>
 
-      <div className="space-y-6 text-gray-700 dark:text-gray-300">
+      <div className="space-y-6 text-neutral-700 dark:text-neutral-300">
         <section>
           <h2 className="text-2xl font-semibold mb-4">1. {t('terms.section1')}</h2>
           <p className="mb-4">{t('terms.section1Text')}</p>

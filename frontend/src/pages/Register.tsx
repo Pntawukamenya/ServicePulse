@@ -106,7 +106,7 @@ export default function Register() {
 
   if (needsOtp) {
     return (
-      <div className="min-h-[calc(100vh-8rem)] flex items-center bg-gradient-to-b from-primary-50/50 to-transparent dark:from-primary-950/20 dark:to-transparent">
+      <div className="min-h-[calc(100vh-8rem)] flex items-center bg-gradient-to-b from-primary-50/30 via-neutral-50 to-neutral-50 dark:from-primary-950/20 dark:via-neutral-950 dark:to-neutral-950">
         <div className="w-full max-w-lg mx-auto px-6 sm:px-8 lg:px-12 py-8 sm:py-12">
           <div className="auth-card">
             <div className="mb-6">
@@ -117,9 +117,7 @@ export default function Register() {
             </p>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-                {error}
-              </div>
+              <div className="mb-4 alert-error">{error}</div>
             )}
 
             <form onSubmit={onVerifyOtp} className="space-y-4">
@@ -147,7 +145,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center bg-gradient-to-b from-primary-50/50 to-transparent dark:from-primary-950/20 dark:to-transparent">
+    <div className="min-h-[calc(100vh-8rem)] flex items-center bg-gradient-to-b from-primary-50/30 via-neutral-50 to-neutral-50 dark:from-primary-950/20 dark:via-neutral-950 dark:to-neutral-950">
       <div className="w-full max-w-lg mx-auto px-6 sm:px-8 lg:px-12 py-8 sm:py-12">
         <div className="auth-card">
           <div className="mb-6">
@@ -205,7 +203,7 @@ export default function Register() {
                 aria-label={identifierType === 'email' ? t('auth.email') : t('auth.phoneNumber')}
               />
               {errors.identifier && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{t('common.required')}</p>
+                <p className="mt-1 text-xs text-error-600 dark:text-error-400">{t('common.required')}</p>
               )}
             </div>
 
@@ -217,7 +215,7 @@ export default function Register() {
                 aria-label={t('auth.password')}
               />
               {errors.password && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{t('auth.password')} {t('common.required')}</p>
+                <p className="mt-1 text-xs text-error-600 dark:text-error-400">{t('auth.password')} {t('common.required')}</p>
               )}
             </div>
 
@@ -229,7 +227,7 @@ export default function Register() {
                 aria-label={t('auth.confirmPassword')}
               />
               {errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{t('common.required')}</p>
+                <p className="mt-1 text-xs text-error-600 dark:text-error-400">{t('common.required')}</p>
               )}
             </div>
 
@@ -248,7 +246,7 @@ export default function Register() {
               </label>
             </div>
             {errors.termsAccepted && (
-              <p className="text-xs text-red-600 dark:text-red-400">{t('authErrors.mustAcceptTerms')}</p>
+              <p className="text-xs text-error-600 dark:text-error-400">{t('authErrors.mustAcceptTerms')}</p>
             )}
 
             <button type="submit" disabled={loading} className="w-full btn btn-primary py-3 rounded-xl text-base font-semibold mt-1">

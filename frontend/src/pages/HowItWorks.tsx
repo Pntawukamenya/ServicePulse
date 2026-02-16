@@ -8,7 +8,7 @@ const StepCard = ({ num, title, desc }: { num: number; title: string; desc: stri
     </div>
     <div>
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600 dark:text-gray-400">{desc}</p>
+      <p className="text-neutral-600 dark:text-neutral-400">{desc}</p>
     </div>
   </div>
 );
@@ -19,7 +19,7 @@ export default function HowItWorks() {
   return (
     <div className="container-main py-12 lg:py-16">
       <h1 className="text-4xl font-bold mb-4">{t('howItWorks.title')}</h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-12 max-w-2xl">
+      <p className="text-neutral-600 dark:text-neutral-400 mb-12 max-w-2xl">
         ServicePulse connects citizens with REG, WASAC, and Emergency Services. Here's how to get started.
       </p>
 
@@ -51,7 +51,7 @@ export default function HowItWorks() {
         </section>
 
         <div className="card bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-center py-8">
-          <p className="text-gray-700 dark:text-gray-300 mb-4">In case of emergency, save these numbers:</p>
+          <p className="text-neutral-700 dark:text-neutral-300 mb-4">In case of emergency, save these numbers:</p>
           <Link to="/" className="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 font-semibold hover:underline">
             View Emergency Hotlines
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>

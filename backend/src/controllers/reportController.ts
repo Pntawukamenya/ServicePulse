@@ -6,6 +6,7 @@ import {
   getReportsByAgency,
   updateReportStatus,
   getReportClusters,
+  deleteReport,
 } from '../services/reportService';
 import { logError } from '../utils/logger';
 
@@ -45,8 +46,13 @@ export const getMyReports = async (req: AuthRequest, res: Response): Promise<voi
 
 export const getAgencyReports = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userAgencyId) {
+    // super_admin can access all; others need agency
+    if (!req.userAgencyId && req.userRole !== 'super_admin') {
       res.status(403).json({ error: 'Agency access required' });
+      return;
+    }
+    if (!req.userAgencyId) {
+      res.status(200).json([]);
       return;
     }
 
@@ -84,10 +90,34 @@ export const updateStatus = async (req: AuthRequest, res: Response): Promise<voi
   }
 };
 
+export const remove = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    await deleteReport(
+      req.params.id,
+      req.userId,
+      req.userRole || '',
+      req.userAgencyId
+    );
+    res.status(204).send();
+  } catch (error: any) {
+    logError(req, error.message, error);
+    res.status(error.message?.includes('not found') ? 404 : 403).json({ error: error.message });
+  }
+};
+
 export const getClusters = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userAgencyId) {
+    if (!req.userAgencyId && req.userRole !== 'super_admin') {
       res.status(403).json({ error: 'Agency access required' });
+      return;
+    }
+    if (!req.userAgencyId) {
+      res.status(200).json([]);
       return;
     }
 

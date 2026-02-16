@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
@@ -16,6 +16,7 @@ export default function Layout({ children }: LayoutProps) {
   const { theme, toggleTheme } = useThemeStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -58,41 +59,41 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm">
+    <div className="min-h-screen flex flex-col bg-neutral-50 dark:bg-neutral-950">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800">
         <div className="container-main">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-400">
+          <div className="flex justify-between items-center h-16 sm:h-[4.25rem]">
+            <div className="flex items-center gap-4 sm:gap-8">
+              <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-400 transition-colors hover:text-primary-700 dark:hover:text-primary-300">
                 ServicePulse
               </Link>
               {isAuthenticated() && (
-                <div className="ml-8 flex space-x-4">
+                <div className="hidden md:flex items-center gap-1">
                   {isCitizen() && (
                     <>
-                      <Link to="/citizen/dashboard" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Link to="/citizen/dashboard" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.dashboard')}
                       </Link>
-                      <Link to="/citizen/report" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Link to="/citizen/report" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.submitReport')}
                       </Link>
-                      <Link to="/citizen/reports" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Link to="/citizen/reports" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.myReports')}
                       </Link>
                     </>
                   )}
                   {isAgency() && (
                     <>
-                      <Link to="/agency/dashboard" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Link to="/agency/dashboard" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.dashboard')}
                       </Link>
-                      <Link to="/agency/alerts" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Link to="/agency/alerts" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.alerts')}
                       </Link>
-                      <Link to="/agency/reports" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Link to="/agency/reports" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.reports')}
                       </Link>
-                      <Link to="/agency/profile" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Link to="/agency/profile" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.profile')}
                       </Link>
                     </>
@@ -100,16 +101,16 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
               )}
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Link
                 to="/"
-                className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="hidden sm:inline-flex px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors"
               >
                 {t('nav.home')}
               </Link>
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                className="p-2.5 rounded-xl text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200"
                 aria-label="Toggle theme"
               >
                 {theme === 'light' ? (
@@ -120,8 +121,8 @@ export default function Layout({ children }: LayoutProps) {
               </button>
               <LanguageSwitcher />
               {isAuthenticated() ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-xs shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl overflow-hidden bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-sm shrink-0 ring-2 ring-neutral-100 dark:ring-neutral-800">
                     {user?.avatarUrl ? (
                       <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -135,37 +136,92 @@ export default function Layout({ children }: LayoutProps) {
                       })()
                     )}
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{user?.fullName}</span>
-                  <button onClick={handleLogout} className="btn btn-outline text-sm">
+                  <span className="hidden sm:inline text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate max-w-[120px]">{user?.fullName}</span>
+                  <button onClick={handleLogout} className="btn btn-outline text-sm py-2">
                     {t('nav.logout')}
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2">
-                  <Link to="/login" className="btn btn-outline text-sm">
+                <div className="flex items-center gap-2">
+                  <Link to="/login" className="btn btn-outline text-sm py-2">
                     {t('nav.login')}
                   </Link>
-                  <Link to="/register" className="btn btn-primary text-sm">
+                  <Link to="/register" className="btn btn-primary text-sm py-2">
                     {t('nav.signUp')}
                   </Link>
                 </div>
               )}
+
+              {isAuthenticated() && (
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 rounded-xl text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
+
+          {mobileMenuOpen && isAuthenticated() && (
+            <div className="md:hidden py-4 border-t border-neutral-200 dark:border-neutral-800 animate-fade-in">
+              <div className="flex flex-col gap-1">
+                {isCitizen() && (
+                  <>
+                    <Link to="/citizen/dashboard" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                      {t('nav.dashboard')}
+                    </Link>
+                    <Link to="/citizen/report" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                      {t('nav.submitReport')}
+                    </Link>
+                    <Link to="/citizen/reports" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                      {t('nav.myReports')}
+                    </Link>
+                  </>
+                )}
+                {isAgency() && (
+                  <>
+                    <Link to="/agency/dashboard" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                      {t('nav.dashboard')}
+                    </Link>
+                    <Link to="/agency/alerts" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                      {t('nav.alerts')}
+                    </Link>
+                    <Link to="/agency/reports" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                      {t('nav.reports')}
+                    </Link>
+                    <Link to="/agency/profile" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                      {t('nav.profile')}
+                    </Link>
+                  </>
+                )}
+                <Link to="/" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                  {t('nav.home')}
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
-      <main className="flex-1 pt-16">{children}</main>
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 py-8">
+      <main className="flex-1 pt-16 sm:pt-[4.25rem]">{children}</main>
+      <footer className="bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 py-8">
         <div className="container-main">
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {t('common.copyright').replace('{{year}}', String(new Date().getFullYear()))}
             </p>
-            <div className="flex space-x-6">
-              <Link to="/terms" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
+            <div className="flex gap-6">
+              <Link to="/terms" className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                 {t('common.terms')}
               </Link>
-              <Link to="/privacy" className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400">
+              <Link to="/privacy" className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                 {t('common.privacy')}
               </Link>
             </div>

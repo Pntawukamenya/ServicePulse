@@ -35,8 +35,13 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 
 export const getAgencyNotifications = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userAgencyId) {
+    // super_admin without agency sees empty list
+    if (!req.userAgencyId && req.userRole !== 'super_admin') {
       res.status(403).json({ error: 'Agency access required' });
+      return;
+    }
+    if (!req.userAgencyId) {
+      res.status(200).json([]);
       return;
     }
 

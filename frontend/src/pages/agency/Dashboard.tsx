@@ -98,34 +98,37 @@ export default function AgencyDashboard() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto w-full">
-        <div className="text-center py-12">{t('common.loading')}</div>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+          <span className="ml-3 text-neutral-500">{t('common.loading')}</span>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto w-full">
-      <h1 className="text-3xl font-bold mb-8">{t('agency.dashboard')}</h1>
+      <h1 className="text-h1 mb-2">{t('agency.dashboard')}</h1>
 
-      <p className="text-gray-600 dark:text-gray-400 mb-8">
+      <p className="text-neutral-600 dark:text-neutral-400 mb-8">
         {t('agency.welcome')}, {user?.fullName}
       </p>
 
       <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{t('agency.alertsSent')}</h3>
+        <div className="card card-flat">
+          <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.alertsSent')}</h3>
           <p className="text-3xl font-bold">{stats.totalAlerts}</p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{t('agency.totalReports')}</h3>
+        <div className="card card-flat">
+          <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.totalReports')}</h3>
           <p className="text-3xl font-bold">{stats.totalReports}</p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{t('citizen.pending')}</h3>
+        <div className="card card-flat">
+          <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('citizen.pending')}</h3>
           <p className="text-3xl font-bold text-yellow-600">{stats.pendingReports}</p>
         </div>
-        <div className="card">
-          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{t('agency.resolved')}</h3>
+        <div className="card card-flat">
+          <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.resolved')}</h3>
           <p className="text-3xl font-bold text-green-600">{stats.resolvedReports}</p>
         </div>
       </div>
@@ -147,30 +150,30 @@ export default function AgencyDashboard() {
           <h2 className="text-xl font-semibold mb-4">{t('agency.recentActivity')}</h2>
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">{t('agency.latestReports')}</h3>
+              <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">{t('agency.latestReports')}</h3>
               {recentReports.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-500">No reports yet</p>
+                <p className="text-sm text-neutral-500">No reports yet</p>
               ) : (
                 <ul className="space-y-2">
                   {recentReports.map((r) => (
                     <li key={r.id} className="flex justify-between items-start text-sm">
                       <span className="truncate flex-1">{getServiceLabelKey(r.service_type) ? t(getServiceLabelKey(r.service_type)!) : r.service_type}</span>
-                      <span className={`ml-2 px-2 py-0.5 rounded text-xs font-medium ${r.status === 'resolved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : r.status === 'in_progress' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>{r.status === 'resolved' ? t('agency.resolved') : r.status === 'in_progress' ? t('agency.inProgress') : t('agency.received')}</span>
+                      <span className={`ml-2 ${r.status === 'resolved' ? 'badge-success' : r.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}>{r.status === 'resolved' ? t('agency.resolved') : r.status === 'in_progress' ? t('agency.inProgress') : t('agency.received')}</span>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">{t('agency.recentAlerts')}</h3>
+              <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">{t('agency.recentAlerts')}</h3>
               {recentAlerts.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-500">No alerts sent yet</p>
+                <p className="text-sm text-neutral-500">No alerts sent yet</p>
               ) : (
                 <ul className="space-y-2">
                   {recentAlerts.map((a) => (
                     <li key={a.id} className="text-sm">
                       <p className="font-medium truncate">{getServiceLabelKey(a.service_type) ? t(getServiceLabelKey(a.service_type)!) : a.service_type}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(a.created_at)}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{formatDate(a.created_at)}</p>
                     </li>
                   ))}
                 </ul>
@@ -185,7 +188,7 @@ export default function AgencyDashboard() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Top locations by report count</p>
             <div className="space-y-2">
               {clusters.map((c) => (
-                <div key={c.location} className="flex justify-between items-center p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                <div key={c.location} className="flex justify-between items-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
                   <span className="text-sm font-medium truncate flex-1">{c.location || 'Unknown'}</span>
                   <span className="text-sm font-bold text-primary-600 dark:text-primary-400 ml-2">{c.count}</span>
                 </div>
@@ -201,7 +204,7 @@ export default function AgencyDashboard() {
           <h2 className="text-xl font-semibold mb-4">{t('agency.pendingApprovals')}</h2>
           <div className="space-y-3">
             {pendingApprovals.map((u) => (
-              <div key={u.id} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+              <div key={u.id} className="flex justify-between items-center py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
                 <span className="text-sm">{u.email || u.phone_number || u.full_name || u.id}</span>
                 <button onClick={() => handleApprove(u.id)} className="btn btn-primary text-sm">
                   {t('agency.approve')}

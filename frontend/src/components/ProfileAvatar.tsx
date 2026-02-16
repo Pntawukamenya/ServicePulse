@@ -66,9 +66,9 @@ export default function ProfileAvatar({ avatarUrl, onAvatarUrlChange, onAvatarUp
   const configured = isCloudinaryConfigured();
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b border-gray-100 dark:border-gray-700">
+    <div className="flex flex-col sm:flex-row items-center gap-6 mb-6 pb-6 border-b border-neutral-200 dark:border-neutral-800">
       <div className="flex-shrink-0">
-        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-primary-100 dark:bg-primary-900/40 ring-2 ring-primary-200 dark:ring-primary-700 group">
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-primary-100 dark:bg-primary-900/40 ring-2 ring-neutral-200 dark:ring-neutral-700 group">
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -88,7 +88,7 @@ export default function ProfileAvatar({ avatarUrl, onAvatarUrlChange, onAvatarUp
         </div>
       </div>
       <div className="flex-1 w-full sm:w-auto">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
           {t('common.profilePicture')}
         </label>
         <input
@@ -104,7 +104,7 @@ export default function ProfileAvatar({ avatarUrl, onAvatarUrlChange, onAvatarUp
               type="button"
               onClick={handleUploadClick}
               disabled={disabled || uploading}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-900/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {uploading ? (
                 <>
@@ -123,13 +123,13 @@ export default function ProfileAvatar({ avatarUrl, onAvatarUrlChange, onAvatarUp
                 </>
               )}
             </button>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t('common.profilePictureHint')}</p>
+            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">{t('common.profilePictureHint')}</p>
           </>
         ) : (
           <p className="text-sm text-amber-600 dark:text-amber-400">{t('common.cloudinaryNotConfigured')}</p>
         )}
         {uploadError && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{uploadError}</p>
+          <p className="mt-2 text-sm text-error-600 dark:text-error-400">{uploadError}</p>
         )}
       </div>
     </div>

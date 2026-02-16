@@ -68,14 +68,11 @@ export default function CitizenReports() {
     return map[status] || status;
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'resolved':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'in_progress':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      default:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+      case 'resolved': return 'badge-success';
+      case 'in_progress': return 'badge-info';
+      default: return 'badge-warning';
     }
   };
 
@@ -92,7 +89,10 @@ export default function CitizenReports() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">{t('common.loading')}</div>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+          <span className="ml-3 text-neutral-500">{t('common.loading')}</span>
+        </div>
       </div>
     );
   }
@@ -119,8 +119,8 @@ export default function CitizenReports() {
 
       {reports.length === 0 ? (
         <div className="card text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <svg className="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </div>
           <p className="text-gray-600 dark:text-gray-400 mb-4">{t('citizen.noReports')}</p>
           <Link to="/citizen/report" className="btn btn-primary">
@@ -144,7 +144,7 @@ export default function CitizenReports() {
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{report.location}</p>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
+                <span className={`${getStatusBadge(report.status)}`}>
                   {getStatusLabel(report.status)}
                 </span>
               </div>

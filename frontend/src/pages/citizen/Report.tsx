@@ -54,9 +54,7 @@ export default function CitizenReport() {
 
       <div className="card">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
-            {error}
-          </div>
+          <div className="mb-4 alert-error">{error}</div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -78,7 +76,7 @@ export default function CitizenReport() {
               ))}
             </select>
             {errors.agency && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.agency.message}</p>
+              <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.agency.message}</p>
             )}
           </div>
 
@@ -98,7 +96,7 @@ export default function CitizenReport() {
               ))}
             </select>
             {errors.serviceType && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.serviceType.message}</p>
+              <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.serviceType.message}</p>
             )}
           </div>
 
@@ -112,7 +110,7 @@ export default function CitizenReport() {
                 placeholder={t('citizen.placeholderLocation')}
               />
             {errors.location && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.location.message}</p>
+              <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.location.message}</p>
             )}
           </div>
 
@@ -153,7 +151,7 @@ export default function CitizenReport() {
               placeholder={t('citizen.placeholderDescription')}
             />
             {errors.description && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.description.message}</p>
+              <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.description.message}</p>
             )}
           </div>
 

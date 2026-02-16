@@ -6,6 +6,7 @@ import {
   getAgencyReports,
   updateStatus,
   getClusters,
+  remove,
 } from '../controllers/reportController';
 import { authenticate, requireRole } from '../middleware/auth';
 import { validate } from '../middleware/validator';
@@ -26,6 +27,7 @@ router.post(
 );
 
 router.get('/my-reports', authenticate, requireRole('citizen'), getMyReports);
+router.delete('/:id', authenticate, requireRole('citizen', 'agency_admin', 'super_admin', 'agency', 'admin'), remove);
 
 // Agency routes
 router.get('/agency', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), getAgencyReports);

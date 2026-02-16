@@ -1,125 +1,92 @@
 /**
- * Seed script for MongoDB - run with: npm run seed
- * Creates agencies, super admin, and agency admins (all auto-verified)
+ * Seed script for ServicePulse MongoDB
+ * Creates agencies (REG, WASAC, Emergency) and admin users
+ * Run with: npm run seed
  */
+import 'dotenv/config';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import dotenv from 'dotenv';
-import Agency from '../models/Agency';
 import User from '../models/User';
-
-dotenv.config();
+import Agency from '../models/Agency';
 
 const MONGODB_URI = process.env.MONGODB_URI;
-if (!MONGODB_URI) {
-  console.error('MONGODB_URI not set in .env');
+
+if (!MONGODB_URI || MONGODB_URI === 'your_mongodb_connection_string') {
+  console.error('❌ Set MONGODB_URI in .env before running seed');
   process.exit(1);
 }
 
+const AGENCIES = [
+  { name: 'Energy Utility Corporation (REG)', code: 'REG' },
+  { name: 'Water and Sanitation Corporation (WASAC)', code: 'WASAC' },
+  { name: 'Emergency Services', code: 'EMERGENCY' },
+];
+
 const ADMIN_CREDENTIALS = [
-  {
-    email: 'superadmin@servicepulse.rw',
-    password: 'ServicePulse@SuperAdmin1!',
-    fullName: 'Super Administrator',
-    role: 'super_admin' as const,
-    agencyCode: null,
-    phoneNumber: '+250000000001',
-  },
-  {
-    email: 'reg.admin@servicepulse.rw',
-    password: 'ServicePulse@REG1!',
-    fullName: 'REG Agency Admin',
-    role: 'agency_admin' as const,
-    agencyCode: 'REG',
-    phoneNumber: '+250000000002',
-  },
-  {
-    email: 'wasac.admin@servicepulse.rw',
-    password: 'ServicePulse@WASAC1!',
-    fullName: 'WASAC Agency Admin',
-    role: 'agency_admin' as const,
-    agencyCode: 'WASAC',
-    phoneNumber: '+250000000003',
-  },
-  {
-    email: 'emergency.admin@servicepulse.rw',
-    password: 'ServicePulse@Emergency1!',
-    fullName: 'Emergency Services Admin',
-    role: 'agency_admin' as const,
-    agencyCode: 'EMERGENCY',
-    phoneNumber: '+250000000004',
-  },
+  { email: 'admin@servicepulse.com', password: 'Admin@24!', role: 'super_admin' as const, agencyCode: null },
+  { email: 'reg@servicepulse.com', password: 'Reg@24!', role: 'agency_admin' as const, agencyCode: 'REG' },
+  { email: 'wasac@servicepulse.com', password: 'Wasac@24!', role: 'agency_admin' as const, agencyCode: 'WASAC' },
+  { email: 'emergency@servicepulse.com', password: 'Emer@24!', role: 'agency_admin' as const, agencyCode: 'EMERGENCY' },
 ];
 
 async function seed() {
-  await mongoose.connect(MONGODB_URI!);
-  console.log('Connected to MongoDB\n');
+  try {
+    await mongoose.connect(MONGODB_URI!);
+    console.log('MongoDB connected\n');
 
-  // 1. Create agencies
-  const agencies = [
-    { name: 'REG - Electricity', code: 'REG' },
-    { name: 'WASAC - Water', code: 'WASAC' },
-    { name: 'Emergency Services', code: 'EMERGENCY' },
-  ];
-
-  const agencyMap: Record<string, mongoose.Types.ObjectId> = {};
-
-  for (const a of agencies) {
-    let agency = await Agency.findOne({ code: a.code });
-    if (!agency) {
-      agency = await Agency.create(a);
-      console.log(`Created agency: ${a.name} (${a.code})`);
-    } else {
-      console.log(`Agency already exists: ${a.code}`);
-    }
-    agencyMap[a.code] = agency._id;
-  }
-
-  // 2. Create super admin and agency admins
-  console.log('\n--- Admin Accounts ---');
-  const credentialsUsed: string[] = [];
-
-  for (const cred of ADMIN_CREDENTIALS) {
-    const existing = await User.findOne({ email: cred.email });
-    if (existing) {
-      console.log(`User already exists: ${cred.email}`);
-      credentialsUsed.push(`${cred.email} / ${cred.password} (already existed)`);
-      continue;
+    // Create agencies
+    for (const agency of AGENCIES) {
+      await Agency.findOneAndUpdate(
+        { code: agency.code },
+        { $set: { name: agency.name } },
+        { upsert: true, new: true }
+      );
+      console.log(`✓ Agency ${agency.code} ready`);
     }
 
-    const passwordHash = await bcrypt.hash(cred.password, 10);
-    const agencyId = cred.agencyCode ? agencyMap[cred.agencyCode] : null;
+    // Create/update admin users
+    const hashedPassword = await bcrypt.hash('Admin@24!', 10);
+    for (const cred of ADMIN_CREDENTIALS) {
+      const passwordHash = cred.role === 'super_admin'
+        ? hashedPassword
+        : await bcrypt.hash(cred.password, 10);
 
-    await User.create({
-      email: cred.email,
-      phone_number: cred.phoneNumber,
-      password_hash: passwordHash,
-      full_name: cred.fullName,
-      identifier_type: 'email',
-      role: cred.role,
-      agency_id: agencyId,
-      agency_code: cred.agencyCode,
-      status: 'active',
-      terms_accepted: true,
-    });
+      const agency = cred.agencyCode
+        ? await Agency.findOne({ code: cred.agencyCode }).select('_id').lean()
+        : null;
 
-    console.log(`Created: ${cred.fullName} (${cred.email})`);
-    credentialsUsed.push(`${cred.email} / ${cred.password}`);
+      await User.findOneAndUpdate(
+        { email: cred.email },
+        {
+          $set: {
+            email: cred.email,
+            password_hash: passwordHash,
+            full_name: cred.role === 'super_admin' ? 'Super Administrator' : `${cred.agencyCode} Admin`,
+            identifier_type: 'email',
+            role: cred.role,
+            agency_id: agency?._id || null,
+            agency_code: cred.agencyCode,
+            status: 'active',
+            terms_accepted: true,
+          },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      console.log(`✓ Admin ${cred.email} ready`);
+    }
+
+    console.log('\nSeed complete. You can log in with:');
+    console.log('  admin@servicepulse.com / Admin@24!');
+    console.log('  reg@servicepulse.com / Reg@24!');
+    console.log('  wasac@servicepulse.com / Wasac@24!');
+    console.log('  emergency@servicepulse.com / Emer@24!\n');
+  } catch (err) {
+    console.error('Seed failed:', err);
+    process.exit(1);
+  } finally {
+    await mongoose.disconnect();
+    process.exit(0);
   }
-
-  // 3. Print credentials
-  console.log('\n========================================');
-  console.log('ADMIN CREDENTIALS (save these securely)');
-  console.log('========================================');
-  credentialsUsed.forEach((c) => console.log(c));
-  console.log('========================================\n');
-  console.log('Seed complete');
-
-  await mongoose.disconnect();
-  process.exit(0);
 }
 
-seed().catch((err) => {
-  console.error('Seed failed:', err);
-  process.exit(1);
-});
+seed();

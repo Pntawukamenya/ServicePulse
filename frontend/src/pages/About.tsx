@@ -22,7 +22,7 @@ export default function About() {
   return (
     <div className="container-main py-12 lg:py-16">
       <h1 className="text-4xl font-bold mb-4">{t('about.title')}</h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-12 max-w-2xl">
+      <p className="text-neutral-600 dark:text-neutral-400 mb-12 max-w-2xl">
         {t('about.missionText')}
       </p>
 
@@ -30,22 +30,22 @@ export default function About() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
         <div className="card text-center">
           <p className="text-2xl font-bold text-primary-600 dark:text-primary-400"><AnimatedCounter end={stats.totalReports} /></p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Reports Submitted</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Reports Submitted</p>
         </div>
         <div className="card text-center">
           <p className="text-2xl font-bold text-green-600 dark:text-green-400"><AnimatedCounter end={stats.resolvedReports} /></p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Issues Resolved</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Issues Resolved</p>
         </div>
         <div className="card text-center">
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400"><AnimatedCounter end={stats.totalAlerts} /></p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Alerts Sent</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Alerts Sent</p>
         </div>
         <div className="card text-center col-span-2 md:col-span-1">
           <Link to="/" className="text-primary-600 dark:text-primary-400 font-semibold hover:underline">Emergency Hotlines →</Link>
         </div>
       </div>
 
-      <div className="space-y-12 text-gray-700 dark:text-gray-300">
+      <div className="space-y-12 text-neutral-700 dark:text-neutral-300">
         {sections.filter((s) => s.key !== 'mission').map((sec) => (
           <section key={sec.key} className="card">
             <div className="flex items-start gap-4">

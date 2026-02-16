@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const otpVerificationSchema = new mongoose.Schema(
+const passwordResetOtpSchema = new mongoose.Schema(
   {
     identifier: { type: String, required: true, trim: true, maxlength: 255 },
     identifier_type: { type: String, enum: ['email', 'phone'], required: true },
@@ -11,6 +11,6 @@ const otpVerificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-otpVerificationSchema.index({ identifier: 1, identifier_type: 1 });
+passwordResetOtpSchema.index({ identifier: 1, identifier_type: 1 });
 
-export default mongoose.model('OtpVerification', otpVerificationSchema);
+export default mongoose.model('PasswordResetOtp', passwordResetOtpSchema);

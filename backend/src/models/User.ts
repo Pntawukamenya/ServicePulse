@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
-    email: { type: String, default: null },
-    phone_number: { type: String, default: null },
+    email: { type: String, default: null, lowercase: true, trim: true, maxlength: 255 },
+    phone_number: { type: String, default: null, trim: true, maxlength: 20 },
     password_hash: { type: String, required: true },
-    full_name: { type: String, default: null },
-    location: { type: String, default: null },
+    full_name: { type: String, default: null, trim: true, maxlength: 200 },
+    location: { type: String, default: null, trim: true, maxlength: 500 },
     identifier_type: { type: String, enum: ['email', 'phone'], required: true },
     role: {
       type: String,

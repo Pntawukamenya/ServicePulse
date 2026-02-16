@@ -20,13 +20,13 @@ interface RecentReport {
   created_at: string;
 }
 
-const StatCard = ({ icon, label, value, color = 'text-gray-900 dark:text-white' }: { icon: React.ReactNode; label: string; value: number | string; color?: string }) => (
-  <div className="card flex items-start gap-4">
+const StatCard = ({ icon, label, value, color = 'text-neutral-900 dark:text-white' }: { icon: React.ReactNode; label: string; value: number | string; color?: string }) => (
+  <div className="card card-flat flex items-start gap-4">
     <div className="w-12 h-12 rounded-xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
       {icon}
     </div>
     <div>
-      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</p>
+      <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{label}</p>
       <p className={`text-2xl font-bold ${color}`}>{value}</p>
     </div>
   </div>
@@ -65,24 +65,27 @@ export default function CitizenDashboard() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    if (status === 'resolved') return 'text-green-600 dark:text-green-400';
-    if (status === 'in_progress') return 'text-blue-600 dark:text-blue-400';
-    return 'text-yellow-600 dark:text-yellow-500';
+  const getStatusBadge = (status: string) => {
+    if (status === 'resolved') return 'badge-success';
+    if (status === 'in_progress') return 'badge-info';
+    return 'badge-warning';
   };
 
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto w-full">
-        <div className="text-center py-12">{t('common.loading')}</div>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+          <span className="ml-3 text-neutral-500">{t('common.loading')}</span>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto w-full">
-      <h1 className="text-3xl font-bold mb-2">{t('citizen.dashboard')}</h1>
-      <p className="text-gray-600 dark:text-gray-400 mb-8">
+      <h1 className="text-h1 mb-2">{t('citizen.dashboard')}</h1>
+      <p className="text-neutral-600 dark:text-neutral-400 mb-8">
         {t('citizen.welcome')}, {user?.fullName || user?.email || user?.phoneNumber}
       </p>
 
@@ -113,27 +116,27 @@ export default function CitizenDashboard() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        <div className="card md:col-span-2">
+        <div className="card card-flat md:col-span-2">
           <h2 className="text-xl font-semibold mb-4">{t('citizen.quickActions')}</h2>
           <div className="grid sm:grid-cols-3 gap-3">
-            <Link to="/citizen/report" className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/20 hover:border-primary-400 dark:hover:border-primary-600 transition-colors">
+            <Link to="/citizen/report" className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/20 hover:border-primary-400 dark:hover:border-primary-600 hover:shadow-md transition-all duration-200">
               <svg className="w-8 h-8 text-primary-600 dark:text-primary-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               <span className="text-sm font-medium text-center">{t('citizen.submitNewReport')}</span>
             </Link>
-            <Link to="/citizen/reports" className="flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-              <svg className="w-8 h-8 text-gray-600 dark:text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <Link to="/citizen/reports" className="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200">
+              <svg className="w-8 h-8 text-neutral-600 dark:text-neutral-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               <span className="text-sm font-medium text-center">{t('citizen.viewAllReports')}</span>
             </Link>
-            <Link to="/citizen/profile" className="flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
-              <svg className="w-8 h-8 text-gray-600 dark:text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            <Link to="/citizen/profile" className="flex flex-col items-center justify-center p-4 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200">
+              <svg className="w-8 h-8 text-neutral-600 dark:text-neutral-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
               <span className="text-sm font-medium text-center">{t('citizen.manageProfile')}</span>
             </Link>
           </div>
         </div>
 
-        <div className="card">
+        <div className="card card-flat">
           <h2 className="text-xl font-semibold mb-4">{t('citizen.serviceInfo')}</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">{t('citizen.serviceInfoDesc')}</p>
+          <p className="text-neutral-600 dark:text-neutral-400 mb-4 text-sm">{t('citizen.serviceInfoDesc')}</p>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
@@ -159,14 +162,14 @@ export default function CitizenDashboard() {
           </div>
           <div className="space-y-3">
             {recentReports.map((r) => (
-              <Link key={r.id} to="/citizen/reports" className="block p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Link key={r.id} to="/citizen/reports" className="block p-4 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all duration-200">
                 <div className="flex justify-between items-start">
                   <span className="font-medium text-sm">{getServiceLabelKey(r.service_type) ? t(getServiceLabelKey(r.service_type)!) : r.service_type}</span>
-                  <span className={`text-xs font-medium ${getStatusColor(r.status)}`}>
+                  <span className={`${getStatusBadge(r.status)}`}>
                     {r.status === 'resolved' ? t('citizen.resolved') : r.status === 'in_progress' ? t('agency.inProgress') : t('citizen.pending')}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">{r.location}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 truncate">{r.location}</p>
               </Link>
             ))}
           </div>

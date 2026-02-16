@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { register, login, verifyOtp, getProfile, updateProfile } from '../controllers/authController';
+import { register, login, verifyOtp, forgotPassword, resetPassword, changePasswordHandler, getProfile, updateProfile } from '../controllers/authController';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validator';
 
@@ -37,6 +37,37 @@ router.post(
   login
 );
 
+router.post(
+  '/forgot-password',
+  validate([body('identifier').trim().notEmpty().withMessage('Email or phone number is required')]),
+  forgotPassword
+);
+router.post(
+  '/reset-password',
+  validate([
+    body('identifier').trim().notEmpty().withMessage('Email or phone number is required'),
+    body('otp').isLength({ min: 6, max: 6 }).withMessage('Reset code must be 6 digits'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+    body('confirmNewPassword').custom((value, { req }) => {
+      if (value !== req.body.newPassword) throw new Error('Passwords do not match');
+      return true;
+    }),
+  ]),
+  resetPassword
+);
+router.put(
+  '/change-password',
+  authenticate,
+  validate([
+    body('oldPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters'),
+    body('confirmNewPassword').custom((value, { req }) => {
+      if (value !== req.body.newPassword) throw new Error('Passwords do not match');
+      return true;
+    }),
+  ]),
+  changePasswordHandler
+);
 router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, updateProfile);
 

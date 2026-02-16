@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import User from '../models/User';
 import OtpVerification from '../models/OtpVerification';
+import PasswordResetOtp from '../models/PasswordResetOtp';
 import { generateToken } from '../utils/jwt';
 import { sendSMS } from '../config/sms';
 import { sendEmail } from '../config/email';
@@ -49,6 +50,19 @@ async function sendOtpToIdentifier(identifier: string, identifierType: Identifie
       to: identifier.trim().toLowerCase(),
       subject: 'ServicePulse - Verification Code',
       text: `Your ServicePulse verification code is: ${otp}\n\nValid for 10 minutes.\n\nIf you didn't request this, please ignore this email.`,
+    });
+  }
+}
+
+async function sendPasswordResetOtp(identifier: string, identifierType: IdentifierType, otp: string): Promise<void> {
+  if (identifierType === 'phone') {
+    const phone = normalizePhone(identifier);
+    await sendSMS(phone, `ServicePulse password reset code: ${otp}. Valid for 10 minutes. Do not share.`);
+  } else {
+    await sendEmail({
+      to: identifier.trim().toLowerCase(),
+      subject: 'ServicePulse - Password Reset Code',
+      text: `Your ServicePulse password reset code is: ${otp}\n\nValid for 10 minutes. Do not share this code.\n\nIf you didn't request a password reset, please ignore this email.`,
     });
   }
 }
@@ -103,11 +117,12 @@ export async function registerUser(data: RegisterData) {
 
   if (role === 'citizen') {
     const otp = generateOtp();
+    const otpHash = await bcrypt.hash(otp, 10);
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     await OtpVerification.create({
       identifier: (identifierType === 'email' ? email : phoneNumber)!,
       identifier_type: identifierType,
-      otp_code: otp,
+      otp_code_hash: otpHash,
       expires_at: expiresAt,
     });
     await sendOtpToIdentifier(identifier, identifierType, otp);
@@ -132,13 +147,25 @@ export async function verifyOtpAndLogin(data: VerifyOtpData) {
   const phoneNumber = identifierType === 'phone' ? normalizePhone(identifier) : null;
   const lookupId = email || phoneNumber;
 
-  const otpRecord = await OtpVerification.findOne({
+  const candidates = await OtpVerification.find({
     identifier: lookupId,
     identifier_type: identifierType,
-    otp_code: otp,
     used_at: null,
     expires_at: { $gte: new Date() },
-  }).sort({ created_at: -1 }).lean();
+  })
+    .sort({ created_at: -1 })
+    .lean();
+
+  let otpRecord: { _id: any } | null = null;
+  for (const c of candidates) {
+    const hash = (c as any).otp_code_hash;
+    if (!hash) continue; // skip legacy plain-text records
+    const match = await bcrypt.compare(otp, hash);
+    if (match) {
+      otpRecord = c;
+      break;
+    }
+  }
 
   if (!otpRecord) {
     throw new Error('Invalid or expired verification code');
@@ -211,6 +238,113 @@ export async function loginUser(data: LoginData) {
     user: formatUser(user),
     token,
   };
+}
+
+export async function requestPasswordReset(identifier: string): Promise<void> {
+  const isEmail = identifier.includes('@');
+  const identifierType: IdentifierType = isEmail ? 'email' : 'phone';
+  const email = isEmail ? identifier.trim().toLowerCase() : null;
+  const phoneNumber = !isEmail ? normalizePhone(identifier) : null;
+  const lookupId = email || phoneNumber;
+
+  const user = await User.findOne(
+    email ? { email } : { phone_number: phoneNumber }
+  ).lean();
+
+  // Only send OTP if account exists - but don't reveal in response
+  if (!user) return;
+
+  const otp = generateOtp();
+  const otpHash = await bcrypt.hash(otp, 10);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await PasswordResetOtp.create({
+    identifier: lookupId!,
+    identifier_type: identifierType,
+    otp_code_hash: otpHash,
+    expires_at: expiresAt,
+  });
+
+  await sendPasswordResetOtp(identifier, identifierType, otp);
+}
+
+export async function resetPasswordWithOtp(
+  identifier: string,
+  otp: string,
+  newPassword: string
+): Promise<void> {
+  const isEmail = identifier.includes('@');
+  const identifierType: IdentifierType = isEmail ? 'email' : 'phone';
+  const email = isEmail ? identifier.trim().toLowerCase() : null;
+  const phoneNumber = !isEmail ? normalizePhone(identifier) : null;
+  const lookupId = email || phoneNumber;
+
+  const candidates = await PasswordResetOtp.find({
+    identifier: lookupId,
+    identifier_type: identifierType,
+    used_at: null,
+    expires_at: { $gte: new Date() },
+  })
+    .sort({ created_at: -1 })
+    .lean();
+
+  let otpRecord: { _id: any } | null = null;
+  for (const c of candidates) {
+    const hash = (c as any).otp_code_hash;
+    if (!hash) continue; // skip legacy plain-text records
+    const match = await bcrypt.compare(otp, hash);
+    if (match) {
+      otpRecord = c;
+      break;
+    }
+  }
+
+  if (!otpRecord) {
+    throw new Error('Invalid or expired reset code. Please request a new one.');
+  }
+
+  const user = await User.findOne(
+    email ? { email: lookupId } : { phone_number: lookupId }
+  ).lean();
+
+  if (!user) {
+    throw new Error('Account not found');
+  }
+
+  if (newPassword.length < 6) {
+    throw new Error('Password must be at least 6 characters');
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await PasswordResetOtp.updateOne(
+    { _id: otpRecord._id },
+    { $set: { used_at: new Date() } }
+  );
+
+  await User.updateOne(
+    { _id: user._id },
+    { $set: { password_hash: hashedPassword } }
+  );
+}
+
+export async function changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
+  const user = await User.findById(userId).select('password_hash').lean();
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const isValid = await bcrypt.compare(oldPassword, user.password_hash);
+  if (!isValid) {
+    throw new Error('Current password is incorrect');
+  }
+
+  if (newPassword.length < 6) {
+    throw new Error('New password must be at least 6 characters');
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await User.findByIdAndUpdate(userId, { $set: { password_hash: hashedPassword } });
 }
 
 export async function getUserById(userId: string) {
