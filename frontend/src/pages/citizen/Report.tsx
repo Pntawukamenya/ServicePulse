@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getServicesByAgency, type AgencyCode } from '../../config/services';
-import LocationInput from '@/components/LocationInput';
+import DistrictSectorSelect, { formatLocation } from '../../components/DistrictSectorSelect';
 
 const AGENCIES: { code: AgencyCode; labelKey: string }[] = [
   { code: 'REG', labelKey: 'home.reg' },
@@ -15,9 +15,10 @@ const AGENCIES: { code: AgencyCode; labelKey: string }[] = [
 interface ReportForm {
   agency: AgencyCode | '';
   serviceType: string;
-  location: string;
-  sector?: string;
-  cell?: string;
+  district: string;
+  sector: string;
+  cell: string;
+  village: string;
   description: string;
 }
 
@@ -27,19 +28,29 @@ export default function CitizenReport() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ReportForm>({
-    defaultValues: { agency: '' },
+    defaultValues: { agency: '', district: '', sector: '', cell: '', village: '' },
+    mode: 'onBlur',
   });
 
   const selectedAgency = watch('agency');
+  const district = watch('district');
+  const sector = watch('sector');
+  const cell = watch('cell');
+  const village = watch('village');
   const agencyServices = selectedAgency ? getServicesByAgency(selectedAgency) : [];
 
   const onSubmit = async (data: ReportForm) => {
     setError('');
+    if (!data.district || !data.sector) {
+      setError(t('auth.districtSectorRequired'));
+      return;
+    }
     setLoading(true);
 
     try {
-      const { agency: _, ...payload } = data;
-      await api.post('/reports', payload);
+      const { agency: _, district: d, sector: s, cell: c, village: v, ...rest } = data;
+      const location = formatLocation(d, s, c, v);
+      await api.post('/reports', { ...rest, location });
       navigate('/citizen/reports');
     } catch (err: any) {
       setError(err.response?.data?.error || t('common.submitReportFailed'));
@@ -68,7 +79,7 @@ export default function CitizenReport() {
                 required: t('citizen.agencyRequired'),
                 onChange: () => setValue('serviceType', ''),
               })}
-              className="input"
+              className="input select"
             >
               <option value="">{t('citizen.selectAgency')}</option>
               {AGENCIES.map((a) => (
@@ -87,7 +98,7 @@ export default function CitizenReport() {
             <select
               id="serviceType"
               {...register('serviceType', { required: t('citizen.serviceTypeRequired') })}
-              className="input"
+              className="input select"
               disabled={!selectedAgency}
             >
               <option value="">{t('citizen.selectService')}</option>
@@ -100,44 +111,25 @@ export default function CitizenReport() {
             )}
           </div>
 
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium mb-1">
-              {t('citizen.location')} *
-            </label>
-            <LocationInput
-                id="location"
-                {...register('location', { required: t('citizen.locationRequired') })}
-                placeholder={t('citizen.placeholderLocation')}
-              />
-            {errors.location && (
-              <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.location.message}</p>
-            )}
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="sector" className="block text-sm font-medium mb-1">
-                {t('citizen.sector')}
-              </label>
-              <input
-                id="sector"
-                type="text"
-                {...register('sector')}
-                className="input"
-              />
-            </div>
-            <div>
-              <label htmlFor="cell" className="block text-sm font-medium mb-1">
-                {t('citizen.cell')}
-              </label>
-              <input
-                id="cell"
-                type="text"
-                {...register('cell')}
-                className="input"
-              />
-            </div>
-          </div>
+          <DistrictSectorSelect
+            district={district}
+            sector={sector}
+            cell={cell}
+            village={village}
+            onDistrictChange={(v) => setValue('district', v)}
+            onSectorChange={(v) => setValue('sector', v)}
+            onCellChange={(v) => setValue('cell', v)}
+            onVillageChange={(v) => setValue('village', v)}
+            districtLabel={t('auth.district')}
+            sectorLabel={t('auth.sector')}
+            cellLabel={t('auth.cell')}
+            villageLabel={t('auth.village')}
+            districtRequired
+            sectorRequired
+            includeCellAndVillage
+            districtError={errors.district?.message}
+            sectorError={errors.sector?.message}
+          />
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium mb-1">

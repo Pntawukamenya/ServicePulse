@@ -27,7 +27,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           ref={ref}
           id={id}
           type={show ? 'text' : 'password'}
-          className={`input py-2.5 pr-12 ${className}`}
+          className={`input pr-12 ${className}`}
           aria-label={props['aria-label']}
           {...props}
         />

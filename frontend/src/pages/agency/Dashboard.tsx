@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getServiceLabelKey } from '../../config/services';
+import { ServiceIconBadge } from '../../components/ServiceIcon';
 
 interface DashboardStats {
   totalAlerts: number;
@@ -57,6 +58,19 @@ export default function AgencyDashboard() {
     }
   }, [user?.role]);
 
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStats();
+        if (user?.role === 'agency_admin') {
+          api.get('/approvals').then((r) => setPendingApprovals(r.data)).catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [user?.role]);
+
   const handleApprove = async (userId: string) => {
     try {
       await api.post(`/approvals/${userId}/approve`);
@@ -95,6 +109,18 @@ export default function AgencyDashboard() {
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+  // Mix reports and alerts into a single chronological feed
+  const recentActivity = useMemo(() => {
+    const items: Array<
+      | { type: 'report'; id: string; createdAt: string; data: RecentReport }
+      | { type: 'alert'; id: string; createdAt: string; data: RecentAlert }
+    > = [
+      ...recentReports.map((r) => ({ type: 'report' as const, id: r.id, createdAt: r.created_at, data: r })),
+      ...recentAlerts.map((a) => ({ type: 'alert' as const, id: a.id, createdAt: (a as any).created_at ?? (a as any).createdAt ?? '', data: a })),
+    ];
+    return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6);
+  }, [recentReports, recentAlerts]);
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto w-full">
@@ -115,71 +141,56 @@ export default function AgencyDashboard() {
       </p>
 
       <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <div className="card card-flat">
+        <Link to="/agency/alerts" className="card card-flat block transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
           <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.alertsSent')}</h3>
           <p className="text-3xl font-bold">{stats.totalAlerts}</p>
-        </div>
-        <div className="card card-flat">
+        </Link>
+        <Link to="/agency/reports" className="card card-flat block transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
           <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.totalReports')}</h3>
           <p className="text-3xl font-bold">{stats.totalReports}</p>
-        </div>
-        <div className="card card-flat">
+        </Link>
+        <Link to="/agency/reports" className="card card-flat block transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
           <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('citizen.pending')}</h3>
           <p className="text-3xl font-bold text-yellow-600">{stats.pendingReports}</p>
-        </div>
-        <div className="card card-flat">
+        </Link>
+        <Link to="/agency/reports?status=resolved" className="card card-flat block transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
           <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.resolved')}</h3>
           <p className="text-3xl font-bold text-green-600">{stats.resolvedReports}</p>
-        </div>
+        </Link>
       </div>
 
       <div className={`grid gap-6 ${clusters.length > 0 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         <div className="card">
-          <h2 className="text-xl font-semibold mb-4">{t('agency.quickActions')}</h2>
-          <div className="space-y-3">
-            <Link to="/agency/alerts" className="block w-full btn btn-primary text-center">
-              {t('agency.createAlert')}
-            </Link>
-            <Link to="/agency/reports" className="block w-full btn btn-outline text-center">
-              {t('agency.viewReports')}
-            </Link>
-          </div>
-        </div>
-
-        <div className="card">
           <h2 className="text-xl font-semibold mb-4">{t('agency.recentActivity')}</h2>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">{t('agency.latestReports')}</h3>
-              {recentReports.length === 0 ? (
-                <p className="text-sm text-neutral-500">No reports yet</p>
-              ) : (
-                <ul className="space-y-2">
-                  {recentReports.map((r) => (
-                    <li key={r.id} className="flex justify-between items-start text-sm">
-                      <span className="truncate flex-1">{getServiceLabelKey(r.service_type) ? t(getServiceLabelKey(r.service_type)!) : r.service_type}</span>
-                      <span className={`ml-2 ${r.status === 'resolved' ? 'badge-success' : r.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}>{r.status === 'resolved' ? t('agency.resolved') : r.status === 'in_progress' ? t('agency.inProgress') : t('agency.received')}</span>
-                    </li>
-                  ))}
-                </ul>
+          {recentActivity.length === 0 ? (
+            <p className="text-sm text-neutral-500">No recent activity</p>
+          ) : (
+            <ul className="space-y-2">
+              {recentActivity.map((item) =>
+                item.type === 'report' ? (
+                  <Link key={`r-${item.id}`} to="/agency/reports" className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
+                    <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</span>
+                      <span className="text-xs text-neutral-500">{formatDate(item.data.created_at)} · Report</span>
+                    </div>
+                    <span className={`shrink-0 text-xs ${item.data.status === 'resolved' ? 'badge-success' : item.data.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}>
+                      {item.data.status === 'resolved' ? t('agency.resolved') : item.data.status === 'in_progress' ? t('agency.inProgress') : t('agency.received')}
+                    </span>
+                  </Link>
+                ) : (
+                  <Link key={`a-${item.id}`} to="/agency/alerts" className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
+                    <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{item.data.message}</p>
+                      <span className="text-xs text-neutral-400">{formatDate(item.createdAt)} · Alert</span>
+                    </div>
+                  </Link>
+                )
               )}
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-3">{t('agency.recentAlerts')}</h3>
-              {recentAlerts.length === 0 ? (
-                <p className="text-sm text-neutral-500">No alerts sent yet</p>
-              ) : (
-                <ul className="space-y-2">
-                  {recentAlerts.map((a) => (
-                    <li key={a.id} className="text-sm">
-                      <p className="font-medium truncate">{getServiceLabelKey(a.service_type) ? t(getServiceLabelKey(a.service_type)!) : a.service_type}</p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{formatDate(a.created_at)}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+            </ul>
+          )}
         </div>
 
         {clusters.length > 0 && (
@@ -188,15 +199,27 @@ export default function AgencyDashboard() {
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Top locations by report count</p>
             <div className="space-y-2">
               {clusters.map((c) => (
-                <div key={c.location} className="flex justify-between items-center p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
+                <Link key={c.location} to={`/agency/reports?location=${encodeURIComponent(c.location || '')}`} className="flex justify-between items-center p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
                   <span className="text-sm font-medium truncate flex-1">{c.location || 'Unknown'}</span>
                   <span className="text-sm font-bold text-primary-600 dark:text-primary-400 ml-2">{c.count}</span>
-                </div>
+                </Link>
               ))}
             </div>
             <Link to="/agency/reports" className="mt-4 block text-sm text-primary-600 dark:text-primary-400 hover:underline">View all reports →</Link>
           </div>
         )}
+
+        <div className="card self-start">
+          <h2 className="text-xl font-semibold mb-4">{t('agency.quickActions')}</h2>
+          <div className="flex flex-col gap-3">
+            <Link to="/agency/alerts" className="w-full btn btn-primary justify-center">
+              {t('agency.createAlert')}
+            </Link>
+            <Link to="/agency/reports" className="w-full btn btn-outline justify-center">
+              {t('agency.viewReports')}
+            </Link>
+          </div>
+        </div>
       </div>
 
       {user?.role === 'agency_admin' && pendingApprovals.length > 0 && (

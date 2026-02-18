@@ -5,16 +5,19 @@ import api from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import { useTranslation } from '../i18n/useTranslation';
 import PasswordInput from '../components/PasswordInput';
+import DistrictSectorSelect from '../components/DistrictSectorSelect';
 
 type IdentifierType = 'email' | 'phone';
 
 interface RegisterForm {
   identifier: string;
-  identifierType: IdentifierType;
   password: string;
-  confirmPassword: string;
   role: 'citizen' | 'agency_employee';
   agencyCode?: string;
+  district: string;
+  sector: string;
+  cell?: string;
+  village?: string;
   termsAccepted: boolean;
 }
 
@@ -32,32 +35,39 @@ export default function Register() {
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     defaultValues: {
       role: 'citizen',
-      identifierType: 'email',
+      district: '',
+      sector: '',
+      cell: '',
+      village: '',
       termsAccepted: false,
     },
   });
 
-  const identifierType = watch('identifierType');
+  const district = watch('district');
+  const sector = watch('sector');
+  const cell = watch('cell');
+  const village = watch('village');
 
   const onSubmit = async (data: RegisterForm) => {
     setError('');
-
-    if (data.password !== data.confirmPassword) {
-      setError(t('authErrors.passwordsNoMatch'));
-      return;
-    }
 
     if (!data.termsAccepted) {
       setError(t('authErrors.mustAcceptTerms'));
       return;
     }
 
+    if (data.role === 'citizen' && (!data.district || !data.sector)) {
+      setError(t('auth.districtSectorRequired'));
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const identifierType: IdentifierType = data.identifier.includes('@') ? 'email' : 'phone';
       const payload: Record<string, unknown> = {
         identifier: data.identifier.trim(),
-        identifierType: data.identifierType,
+        identifierType,
         password: data.password,
         role: data.role,
         termsAccepted: data.termsAccepted,
@@ -65,13 +75,19 @@ export default function Register() {
       if (data.role === 'agency_employee' && data.agencyCode) {
         payload.agencyCode = data.agencyCode;
       }
+      if (data.role === 'citizen' && data.district && data.sector) {
+        payload.district = data.district;
+        payload.sector = data.sector;
+        if (data.cell) payload.cell = data.cell;
+        if (data.village) payload.village = data.village;
+      }
 
       const response = await api.post('/auth/register', payload);
 
       if (response.data.requiresOtp) {
         setNeedsOtp(true);
         setOtpIdentifier(data.identifier.trim());
-        setOtpIdentifierType(data.identifierType);
+        setOtpIdentifierType(identifierType);
       } else {
         // Agency employee - pending approval
         setError(response.data.message || t('auth.pendingApproval'));
@@ -160,7 +176,7 @@ export default function Register() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <select id="role" {...register('role')} className="input py-2.5" aria-label={t('auth.accountType')}>
+              <select id="role" {...register('role')} className="select-location" aria-label={t('auth.accountType')}>
                 <option value="citizen">{t('auth.citizen')}</option>
                 <option value="agency_employee">{t('auth.agency')}</option>
               </select>
@@ -168,39 +184,23 @@ export default function Register() {
 
             {watch('role') === 'agency_employee' && (
               <div>
-                <select id="agencyCode" {...register('agencyCode')} className="input py-2.5" aria-label={t('auth.selectAgency')}>
+                <select id="agencyCode" {...register('agencyCode')} className="select-location" aria-label={t('auth.selectAgency')}>
                   <option value="">{t('auth.selectAgency')}</option>
-                  <option value="REG">REG - {t('home.reg')}</option>
-                  <option value="WASAC">WASAC - {t('home.wasac')}</option>
+                  <option value="REG">{t('home.reg')}</option>
+                  <option value="WASAC">{t('home.wasac')}</option>
                   <option value="EMERGENCY">{t('home.emergency')}</option>
                 </select>
               </div>
             )}
 
             <div>
-              <input type="hidden" {...register('identifierType')} />
-              <div className="flex gap-2 mb-2">
-                <button
-                  type="button"
-                  onClick={() => setValue('identifierType', 'email')}
-                  className={`flex-1 text-sm py-2 rounded-lg ${identifierType === 'email' ? 'btn btn-primary' : 'btn btn-outline'}`}
-                >
-                  {t('auth.email')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setValue('identifierType', 'phone')}
-                  className={`flex-1 text-sm py-2 rounded-lg ${identifierType === 'phone' ? 'btn btn-primary' : 'btn btn-outline'}`}
-                >
-                  {t('auth.phoneNumber')}
-                </button>
-              </div>
               <input
-                type={identifierType === 'email' ? 'email' : 'tel'}
+                id="identifier"
+                type="text"
                 {...register('identifier', { required: true })}
-                className="input py-2.5"
-                placeholder={identifierType === 'email' ? 'you@example.com' : '+250 788 123 456'}
-                aria-label={identifierType === 'email' ? t('auth.email') : t('auth.phoneNumber')}
+                className="input w-full"
+                placeholder={t('auth.emailOrPhone')}
+                aria-label={t('auth.emailOrPhone')}
               />
               {errors.identifier && (
                 <p className="mt-1 text-xs text-error-600 dark:text-error-400">{t('common.required')}</p>
@@ -219,17 +219,27 @@ export default function Register() {
               )}
             </div>
 
-            <div>
-              <PasswordInput
-                id="confirmPassword"
-                {...register('confirmPassword', { required: true })}
-                placeholder={t('auth.confirmPassword')}
-                aria-label={t('auth.confirmPassword')}
+            {watch('role') === 'citizen' && (
+              <DistrictSectorSelect
+                district={district}
+                sector={sector}
+                cell={cell}
+                village={village}
+                onDistrictChange={(v) => setValue('district', v)}
+                onSectorChange={(v) => setValue('sector', v)}
+                onCellChange={(v) => setValue('cell', v)}
+                onVillageChange={(v) => setValue('village', v)}
+                districtLabel={t('auth.district')}
+                sectorLabel={t('auth.sector')}
+                cellLabel={t('auth.cell')}
+                villageLabel={t('auth.village')}
+                districtRequired
+                sectorRequired
+                includeCellAndVillage
+                districtError={errors.district?.message}
+                sectorError={errors.sector?.message}
               />
-              {errors.confirmPassword && (
-                <p className="mt-1 text-xs text-error-600 dark:text-error-400">{t('common.required')}</p>
-              )}
-            </div>
+            )}
 
             <div className="flex items-start gap-3">
               <input
@@ -249,7 +259,7 @@ export default function Register() {
               <p className="text-xs text-error-600 dark:text-error-400">{t('authErrors.mustAcceptTerms')}</p>
             )}
 
-            <button type="submit" disabled={loading} className="w-full btn btn-primary py-3 rounded-xl text-base font-semibold mt-1">
+            <button type="submit" disabled={loading} className="w-full btn btn-primary rounded-xl text-base font-semibold mt-1">
               {loading ? t('auth.creatingAccount') : t('auth.register')}
             </button>
           </form>

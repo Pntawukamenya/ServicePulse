@@ -148,7 +148,12 @@
     "confirmPasswordRequired": "Veuillez confirmer votre nouveau mot de passe",
     "passwordMinLength": "Le mot de passe doit contenir au moins 6 caractères",
     "passwordsNoMatch": "Le nouveau mot de passe et la confirmation ne correspondent pas",
-    "changePasswordHint": "Entrez votre mot de passe actuel et choisissez-en un nouveau. Utilisez au moins 6 caractères."
+    "changePasswordHint": "Entrez votre mot de passe actuel et choisissez-en un nouveau. Utilisez au moins 6 caractères.",
+    "district": "District",
+    "sector": "Secteur",
+    "cell": "Cellule",
+    "village": "Village",
+    "districtSectorRequired": "Veuillez sélectionner votre District et Secteur (localisation administrative du Rwanda)"
   },
   "terms": {
     "title": "Conditions générales",
@@ -247,6 +252,7 @@
     "filterLocation": "Filtrer par localisation",
     "filterStatus": "Filtrer par statut",
     "allStatuses": "Tous les statuts",
+    "allServices": "Tous les services",
     "received": "Reçu",
     "inProgress": "En cours",
     "resolved": "Résolu",

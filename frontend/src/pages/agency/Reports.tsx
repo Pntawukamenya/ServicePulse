@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAuthStore } from '../../store/authStore';
 import { getServicesByAgency, getServiceLabelKey } from '../../config/services';
 import type { AgencyCode } from '../../config/services';
+import ReportCard from '../../components/ReportCard';
 
 interface Report {
   id: string;
@@ -23,14 +25,22 @@ interface Report {
 export default function AgencyReports() {
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const [searchParams] = useSearchParams();
   const agencyServices = getServicesByAgency((user?.agencyCode as AgencyCode) || 'REG');
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    location: '',
-    serviceType: '',
-    status: '',
-  });
+  const [filters, setFilters] = useState(() => ({
+    location: searchParams.get('location') || '',
+    serviceType: searchParams.get('serviceType') || '',
+    status: searchParams.get('status') || '',
+  }));
+
+  useEffect(() => {
+    const location = searchParams.get('location') || '';
+    const status = searchParams.get('status') || '';
+    const serviceType = searchParams.get('serviceType') || '';
+    setFilters({ location, status, serviceType });
+  }, [searchParams]);
 
   useEffect(() => {
     fetchReports();
@@ -78,8 +88,11 @@ export default function AgencyReports() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -114,10 +127,13 @@ export default function AgencyReports() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold">{t('agency.reportsInbox')}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-10">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-white tracking-tight">{t('agency.reportsInbox')}</h1>
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">Review and manage citizen service reports</p>
+        </div>
         {reports.length > 0 && (
-          <button onClick={exportCsv} className="btn btn-outline w-fit">
+          <button onClick={exportCsv} className="btn btn-outline w-fit shrink-0">
             {t('agency.exportCsv')}
           </button>
         )}
@@ -146,9 +162,9 @@ export default function AgencyReports() {
               id="serviceTypeFilter"
               value={filters.serviceType}
               onChange={(e) => setFilters({ ...filters, serviceType: e.target.value })}
-              className="input"
+              className="input select"
             >
-              <option value="">{t('agency.allStatuses')}</option>
+              <option value="">{t('agency.allServices')}</option>
               {agencyServices.map((s) => (
                 <option key={s.code} value={s.code}>{t(s.labelKey)}</option>
               ))}
@@ -162,7 +178,7 @@ export default function AgencyReports() {
               id="statusFilter"
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="input"
+              className="input select"
             >
               <option value="">{t('agency.allStatuses')}</option>
               <option value="received">{t('agency.received')}</option>
@@ -174,57 +190,41 @@ export default function AgencyReports() {
       </div>
 
       {reports.length === 0 ? (
-        <div className="card text-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">{t('agency.noReports')}</p>
+        <div className="card text-center py-16 px-8 max-w-md mx-auto border border-neutral-200 dark:border-neutral-700">
+          <div className="w-12 h-12 mx-auto mb-6 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <svg className="w-6 h-6 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+          </div>
+          <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-2">{t('agency.noReports')}</h3>
+          <p className="text-neutral-600 dark:text-neutral-400">Reports from citizens will appear here</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
           {reports.map((report) => (
-            <div key={report.id} className="card">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400">#{report.id.slice(0, 8).toUpperCase()}</span>
-                    <h3 className="text-lg font-semibold">{getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : report.service_type}</h3>
-                    <span className={`${getStatusBadge(report.status)}`}>
-                      {getStatusLabel(report.status)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {t('citizen.location')}: {report.location}
-                  </p>
-                  {report.users && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      {t('agency.reportedBy')} {report.users.full_name} ({report.users.phone_number})
-                    </p>
-                  )}
-                </div>
-              </div>
-              <p className="text-gray-700 dark:text-gray-300 mb-4">{report.description}</p>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('common.submitted')}: {formatDate(report.created_at)}
-                </span>
-                <div className="flex space-x-2">
-                  {report.status !== 'in_progress' && (
-                    <button
-                      onClick={() => updateStatus(report.id, 'in_progress')}
-                      className="btn btn-outline text-sm"
-                    >
-                      {t('agency.markInProgress')}
-                    </button>
-                  )}
-                  {report.status !== 'resolved' && (
-                    <button
-                      onClick={() => updateStatus(report.id, 'resolved')}
-                      className="btn btn-primary text-sm"
-                    >
-                      {t('agency.markResolved')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ReportCard
+              key={report.id}
+              compact
+              id={report.id}
+              serviceType={report.service_type}
+              displayLabel={getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : undefined}
+              location={report.location}
+              description={report.description}
+              status={report.status}
+              created_at={report.created_at}
+              updated_at={report.updated_at}
+              reporter={report.users}
+              statusLabel={getStatusLabel}
+              statusBadge={getStatusBadge}
+              formatDate={formatDate}
+              showActions
+              reportIdPrefix="R"
+              submittedLabel={t('common.submitted')}
+              updatedLabel={t('common.updated')}
+              reportedByLabel={t('agency.reportedBy')}
+              markInProgressLabel={t('agency.markInProgress')}
+              markResolvedLabel={t('agency.markResolved')}
+              onMarkInProgress={() => updateStatus(report.id, 'in_progress')}
+              onMarkResolved={() => updateStatus(report.id, 'resolved')}
+            />
           ))}
         </div>
       )}

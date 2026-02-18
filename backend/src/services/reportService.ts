@@ -18,11 +18,13 @@ export interface UpdateReportStatusData {
 }
 
 function mapReport(doc: any) {
-  const r = doc.toObject ? doc.toObject() : doc;
+  const obj = doc.toObject ? doc.toObject() : doc;
   return {
-    ...r,
-    id: r._id?.toString() || r.id,
-    user_id: r.user_id?.toString() || r.user_id,
+    ...obj,
+    id: obj._id?.toString() || obj.id,
+    user_id: obj.user_id?.toString() || obj.user_id,
+    created_at: obj.createdAt ?? obj.created_at,
+    updated_at: obj.updatedAt ?? obj.updated_at,
   };
 }
 
@@ -44,13 +46,15 @@ export async function createReport(data: CreateReportData) {
 
 export async function getReportsByUser(userId: string) {
   const reports = await Report.find({ user_id: userId })
-    .sort({ created_at: -1 })
+    .sort({ createdAt: -1 })
     .lean();
 
   return reports.map((r) => ({
     ...r,
     id: r._id.toString(),
     user_id: r.user_id?.toString(),
+    created_at: (r as any).createdAt ?? (r as any).created_at,
+    updated_at: (r as any).updatedAt ?? (r as any).updated_at,
   }));
 }
 
@@ -79,7 +83,7 @@ export async function getReportsByAgency(agencyId: string, filters?: { serviceTy
 
   const reports = await Report.find(query)
     .populate('user_id', 'full_name phone_number email')
-    .sort({ created_at: -1 })
+    .sort({ createdAt: -1 })
     .lean();
 
   return reports.map((r) => {
@@ -92,6 +96,8 @@ export async function getReportsByAgency(agencyId: string, filters?: { serviceTy
       id: (r as any)._id.toString(),
       user_id: u?._id?.toString() || (r as any).user_id?.toString(),
       users,
+      created_at: (r as any).createdAt ?? (r as any).created_at,
+      updated_at: (r as any).updatedAt ?? (r as any).updated_at,
     };
   });
 }
@@ -113,6 +119,8 @@ export async function updateReportStatus(data: UpdateReportStatusData) {
     ...report,
     id: report._id.toString(),
     user_id: report.user_id?.toString(),
+    created_at: (report as any).createdAt ?? (report as any).created_at,
+    updated_at: (report as any).updatedAt ?? (report as any).updated_at,
   };
 }
 
@@ -161,6 +169,44 @@ export async function getReportClusters(agencyId: string) {
     clusters[key] = (clusters[key] || 0) + 1;
   });
 
+  return Object.entries(clusters)
+    .map(([location, count]) => ({ location, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/** Super admin: get all reports across all agencies */
+export async function getAllReports(filters?: { serviceType?: string; location?: string; status?: string }) {
+  const query: Record<string, any> = {};
+  if (filters?.location) query.location = new RegExp(filters.location, 'i');
+  if (filters?.serviceType) query.service_type = filters.serviceType;
+  if (filters?.status) query.status = filters.status;
+
+  const reports = await Report.find(query)
+    .populate('user_id', 'full_name phone_number email')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return reports.map((r) => {
+    const u = (r as any).user_id;
+    return {
+      ...r,
+      id: (r as any)._id.toString(),
+      user_id: u?._id?.toString() || (r as any).user_id?.toString(),
+      users: u ? { full_name: u.full_name, phone_number: u.phone_number, email: u.email } : { full_name: null, phone_number: null, email: null },
+      created_at: (r as any).createdAt ?? (r as any).created_at,
+      updated_at: (r as any).updatedAt ?? (r as any).updated_at,
+    };
+  });
+}
+
+/** Super admin: get clusters across all agencies */
+export async function getAllReportClusters() {
+  const reports = await Report.find({}).select('location').lean();
+  const clusters: Record<string, number> = {};
+  reports.forEach((r) => {
+    const key = (r as any).location || 'Unknown';
+    clusters[key] = (clusters[key] || 0) + 1;
+  });
   return Object.entries(clusters)
     .map(([location, count]) => ({ location, count }))
     .sort((a, b) => b.count - a.count);

@@ -4,8 +4,10 @@ import {
   createReport,
   getReportsByUser,
   getReportsByAgency,
+  getAllReports,
   updateReportStatus,
   getReportClusters,
+  getAllReportClusters,
   deleteReport,
 } from '../services/reportService';
 import { logError } from '../utils/logger';
@@ -46,13 +48,9 @@ export const getMyReports = async (req: AuthRequest, res: Response): Promise<voi
 
 export const getAgencyReports = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    // super_admin can access all; others need agency
+    // super_admin without agency sees all; others need agency
     if (!req.userAgencyId && req.userRole !== 'super_admin') {
       res.status(403).json({ error: 'Agency access required' });
-      return;
-    }
-    if (!req.userAgencyId) {
-      res.status(200).json([]);
       return;
     }
 
@@ -62,7 +60,9 @@ export const getAgencyReports = async (req: AuthRequest, res: Response): Promise
       status: req.query.status as string,
     };
 
-    const reports = await getReportsByAgency(req.userAgencyId, filters);
+    const reports = req.userRole === 'super_admin' && !req.userAgencyId
+      ? await getAllReports(filters)
+      : await getReportsByAgency(req.userAgencyId!, filters);
     res.status(200).json(reports);
   } catch (error: any) {
     logError(req, error.message, error);
@@ -116,12 +116,10 @@ export const getClusters = async (req: AuthRequest, res: Response): Promise<void
       res.status(403).json({ error: 'Agency access required' });
       return;
     }
-    if (!req.userAgencyId) {
-      res.status(200).json([]);
-      return;
-    }
 
-    const clusters = await getReportClusters(req.userAgencyId);
+    const clusters = req.userRole === 'super_admin' && !req.userAgencyId
+      ? await getAllReportClusters()
+      : await getReportClusters(req.userAgencyId!);
     res.status(200).json(clusters);
   } catch (error: any) {
     logError(req, error.message, error);

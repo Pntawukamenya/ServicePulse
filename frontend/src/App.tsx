@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -9,22 +9,24 @@ import Home from './pages/Home';
 import About from './pages/About';
 import HowItWorks from './pages/HowItWorks';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 
 // Citizen pages
 import CitizenDashboard from './pages/citizen/Dashboard';
-import CitizenReport from './pages/citizen/Report';
 import CitizenReports from './pages/citizen/Reports';
-import CitizenProfile from './pages/citizen/Profile';
 
 // Agency pages
 import AgencyDashboard from './pages/agency/Dashboard';
-import AgencyAlerts from './pages/agency/Alerts';
 import AgencyReports from './pages/agency/Reports';
 import AgencyProfile from './pages/agency/Profile';
+
+// Lazy-loaded pages (contain Rwanda locations ~230KB)
+const Register = lazy(() => import('./pages/Register'));
+const CitizenReport = lazy(() => import('./pages/citizen/Report'));
+const CitizenProfile = lazy(() => import('./pages/citizen/Profile'));
+const AgencyAlerts = lazy(() => import('./pages/agency/Alerts'));
 
 function App() {
   const { theme, setTheme } = useThemeStore();
@@ -36,6 +38,7 @@ function App() {
   return (
     <BrowserRouter>
       <Layout>
+        <Suspense fallback={<div className="flex min-h-[200px] items-center justify-center text-neutral-500 dark:text-neutral-400">Loading...</div>}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -112,6 +115,7 @@ function App() {
             }
           />
         </Routes>
+        </Suspense>
       </Layout>
     </BrowserRouter>
   );

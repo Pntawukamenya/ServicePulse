@@ -17,7 +17,7 @@ const reportSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-reportSchema.index({ user_id: 1, created_at: -1 });
+reportSchema.index({ user_id: 1, createdAt: -1 });
 reportSchema.index({ service_type: 1, status: 1 });
 
 export default mongoose.model('Report', reportSchema);

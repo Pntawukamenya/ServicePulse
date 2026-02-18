@@ -16,6 +16,10 @@ export interface RegisterData {
   password: string;
   role: 'citizen' | 'agency_employee';
   agencyCode?: string;
+  district?: string;
+  sector?: string;
+  cell?: string;
+  village?: string;
   termsAccepted: boolean;
 }
 
@@ -83,7 +87,7 @@ function formatUser(user: any) {
 }
 
 export async function registerUser(data: RegisterData) {
-  const { identifier, identifierType, password, role, agencyCode, termsAccepted } = data;
+  const { identifier, identifierType, password, role, agencyCode, district, sector, cell, village, termsAccepted } = data;
 
   if (!termsAccepted) {
     throw new Error('Terms and conditions must be accepted');
@@ -102,12 +106,20 @@ export async function registerUser(data: RegisterData) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const status = role === 'citizen' ? 'pending_otp' : 'pending_approval';
+  let location: string | null = null;
+  if (role === 'citizen' && district && sector) {
+    const parts = [district.trim(), sector.trim()];
+    if (cell?.trim()) parts.push(cell.trim());
+    if (village?.trim()) parts.push(village.trim());
+    location = parts.join(', ');
+  }
 
   const user = await User.create({
     email,
     phone_number: phoneNumber,
     password_hash: hashedPassword,
     full_name: null,
+    location,
     identifier_type: identifierType,
     role,
     agency_code: agencyCode || null,

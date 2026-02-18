@@ -148,7 +148,12 @@
     "confirmPasswordRequired": "Please confirm your new password",
     "passwordMinLength": "Password must be at least 6 characters",
     "passwordsNoMatch": "New password and confirmation do not match",
-    "changePasswordHint": "Enter your current password and choose a new one. Use at least 6 characters."
+    "changePasswordHint": "Enter your current password and choose a new one. Use at least 6 characters.",
+    "district": "District",
+    "sector": "Sector",
+    "cell": "Cell",
+    "village": "Village",
+    "districtSectorRequired": "Please select your District and Sector (Rwanda administrative location)"
   },
   "terms": {
     "title": "Terms and Conditions",
@@ -249,6 +254,7 @@
     "filterLocation": "Filter by Location",
     "filterStatus": "Filter by Status",
     "allStatuses": "All Statuses",
+    "allServices": "All services",
     "received": "Received",
     "inProgress": "In Progress",
     "resolved": "Resolved",

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getServiceLabelKey } from '../../config/services';
+import ReportCard from '../../components/ReportCard';
 
 interface Report {
   id: string;
@@ -12,10 +13,6 @@ interface Report {
   status: 'received' | 'in_progress' | 'resolved';
   created_at: string;
   updated_at?: string;
-}
-
-function getReportId(id: string) {
-  return `#SP-${id.slice(0, 8).toUpperCase()}`;
 }
 
 export default function CitizenReports() {
@@ -76,8 +73,11 @@ export default function CitizenReports() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -99,30 +99,32 @@ export default function CitizenReports() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold">{t('citizen.myReports')}</h1>
-        <div className="flex flex-wrap gap-2">
-          <input
-            type="search"
-            placeholder="Search reports..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input max-w-xs"
-          />
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="input w-auto">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="status">By status</option>
-          </select>
-        </div>
+      <div className="mb-10">
+        <h1 className="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-white tracking-tight">{t('citizen.myReports')}</h1>
+        <p className="mt-2 text-neutral-600 dark:text-neutral-400">Track and manage your service reports</p>
+      </div>
+      <div className="flex flex-wrap gap-3 mb-8">
+        <input
+          type="search"
+          placeholder="Search reports..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input max-w-xs"
+        />
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="input select w-auto">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="status">By status</option>
+        </select>
       </div>
 
       {reports.length === 0 ? (
-        <div className="card text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-            <svg className="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        <div className="card text-center py-16 px-8 max-w-md mx-auto border border-neutral-200 dark:border-neutral-700">
+          <div className="w-12 h-12 mx-auto mb-6 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <svg className="w-6 h-6 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{t('citizen.noReports')}</p>
+          <h3 className="text-xl font-semibold text-neutral-900 dark:text-white mb-2">{t('citizen.noReports')}</h3>
+          <p className="text-neutral-600 dark:text-neutral-400 mb-6">Submit your first report to get started</p>
           <Link to="/citizen/report" className="btn btn-primary">
             {t('citizen.submitFirst')}
           </Link>
@@ -133,29 +135,25 @@ export default function CitizenReports() {
           <button onClick={() => setSearch('')} className="btn btn-outline">Clear search</button>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
           {filteredAndSorted.map((report) => (
-            <div key={report.id} className="card">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400">{getReportId(report.id)}</span>
-                    <h3 className="text-lg font-semibold">{getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : report.service_type}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{report.location}</p>
-                </div>
-                <span className={`${getStatusBadge(report.status)}`}>
-                  {getStatusLabel(report.status)}
-                </span>
-              </div>
-              <p className="text-gray-700 dark:text-gray-300 mb-4">{report.description}</p>
-              <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                <span>{t('common.submitted')}: {formatDate(report.created_at)}</span>
-                {report.updated_at && report.updated_at !== report.created_at && (
-                  <span>{t('common.updated')}: {formatDate(report.updated_at)}</span>
-                )}
-              </div>
-            </div>
+            <ReportCard
+              key={report.id}
+              compact
+              id={report.id}
+              serviceType={report.service_type}
+              displayLabel={getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : undefined}
+              location={report.location}
+              description={report.description}
+              status={report.status}
+              created_at={report.created_at}
+              updated_at={report.updated_at}
+              statusLabel={getStatusLabel}
+              statusBadge={getStatusBadge}
+              formatDate={formatDate}
+              submittedLabel={t('common.submitted')}
+              updatedLabel={t('common.updated')}
+            />
           ))}
         </div>
       )}

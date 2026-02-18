@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import {
   createNotification,
   getNotificationsByAgency,
+  getAllNotifications,
 } from '../services/notificationService';
 import { logError } from '../utils/logger';
 import { isValidServiceForAgency } from '../config/services';
@@ -35,17 +36,15 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 
 export const getAgencyNotifications = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    // super_admin without agency sees empty list
+    // super_admin without agency sees all notifications
     if (!req.userAgencyId && req.userRole !== 'super_admin') {
       res.status(403).json({ error: 'Agency access required' });
       return;
     }
-    if (!req.userAgencyId) {
-      res.status(200).json([]);
-      return;
-    }
 
-    const notifications = await getNotificationsByAgency(req.userAgencyId);
+    const notifications = req.userRole === 'super_admin' && !req.userAgencyId
+      ? await getAllNotifications()
+      : await getNotificationsByAgency(req.userAgencyId!);
     res.status(200).json(notifications);
   } catch (error: any) {
     logError(req, error.message, error);

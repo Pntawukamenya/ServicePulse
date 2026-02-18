@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit",
     "seed": "tsx src/scripts/seed.ts",
+    "seed:reports": "tsx src/scripts/seedReports.ts",
     "migrate:otp-hash": "tsx src/scripts/migrate-otp-hash.ts"
   },
   "keywords": [],

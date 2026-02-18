@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import LocationInput from '../../components/LocationInput';
+import DistrictSectorSelect, { formatLocation, parseLocation } from '../../components/DistrictSectorSelect';
 import ProfileAvatar from '../../components/ProfileAvatar';
 import ChangePasswordForm from '../../components/ChangePasswordForm';
 
@@ -11,7 +11,10 @@ interface ProfileForm {
   fullName: string;
   email: string;
   phoneNumber: string;
-  location: string;
+  district: string;
+  sector: string;
+  cell: string;
+  village: string;
   smsOptIn: boolean;
   avatarUrl: string;
 }
@@ -24,7 +27,7 @@ export default function CitizenProfile() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const { register, handleSubmit, reset, watch, setValue } = useForm<ProfileForm>({
-    defaultValues: { avatarUrl: '' },
+    defaultValues: { avatarUrl: '', district: '', sector: '', cell: '', village: '' },
   });
 
   useEffect(() => {
@@ -36,11 +39,15 @@ export default function CitizenProfile() {
       const response = await api.get('/auth/profile');
       setProfile(response.data);
       const avatarUrl = response.data.avatar_url || '';
+      const { district, sector, cell, village } = parseLocation(response.data.location);
       reset({
         fullName: response.data.full_name || '',
         email: response.data.email || '',
         phoneNumber: response.data.phone_number || '',
-        location: response.data.location || '',
+        district,
+        sector,
+        cell: cell || '',
+        village: village || '',
         smsOptIn: response.data.sms_opt_in || false,
         avatarUrl,
       });
@@ -58,11 +65,12 @@ export default function CitizenProfile() {
     setLoading(true);
 
     try {
+      const location = formatLocation(data.district, data.sector, data.cell, data.village) || null;
       const response = await api.put('/auth/profile', {
         full_name: data.fullName || null,
         email: data.email || null,
         phone_number: data.phoneNumber || null,
-        location: data.location || null,
+        location,
         sms_opt_in: data.smsOptIn,
         avatar_url: data.avatarUrl || null,
       });
@@ -165,16 +173,21 @@ onAvatarUploaded={async (url) => {
             />
           </div>
 
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium mb-1">
-              {t('citizen.location')}
-            </label>
-            <LocationInput
-              id="location"
-              {...register('location')}
-              placeholder={t('citizen.placeholderLocation')}
-            />
-          </div>
+          <DistrictSectorSelect
+            district={watch('district')}
+            sector={watch('sector')}
+            cell={watch('cell')}
+            village={watch('village')}
+            onDistrictChange={(v) => setValue('district', v)}
+            onSectorChange={(v) => setValue('sector', v)}
+            onCellChange={(v) => setValue('cell', v)}
+            onVillageChange={(v) => setValue('village', v)}
+            districtLabel={t('auth.district')}
+            sectorLabel={t('auth.sector')}
+            cellLabel={t('auth.cell')}
+            villageLabel={t('auth.village')}
+            includeCellAndVillage
+          />
 
           <div className="flex items-start">
             <input

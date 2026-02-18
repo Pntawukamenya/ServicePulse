@@ -13,6 +13,6 @@ const notificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-notificationSchema.index({ agency_id: 1, created_at: -1 });
+notificationSchema.index({ agency_id: 1, createdAt: -1 });
 
 export default mongoose.model('Notification', notificationSchema);

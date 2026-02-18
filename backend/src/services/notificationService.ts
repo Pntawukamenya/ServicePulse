@@ -72,17 +72,33 @@ export async function createNotification(data: CreateNotificationData) {
     ...updated,
     id: updated!._id.toString(),
     agency_id: (updated as any).agency_id?.toString(),
+    created_at: (updated as any).createdAt ?? (updated as any).created_at,
   };
 }
 
 export async function getNotificationsByAgency(agencyId: string) {
   const notifications = await Notification.find({ agency_id: agencyId })
-    .sort({ created_at: -1 })
+    .sort({ createdAt: -1 })
     .lean();
 
   return notifications.map((n) => ({
     ...n,
     id: (n as any)._id.toString(),
     agency_id: (n as any).agency_id?.toString(),
+    created_at: (n as any).createdAt ?? (n as any).created_at,
+  }));
+}
+
+/** Super admin: get all notifications across all agencies */
+export async function getAllNotifications() {
+  const notifications = await Notification.find({})
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return notifications.map((n) => ({
+    ...n,
+    id: (n as any)._id.toString(),
+    agency_id: (n as any).agency_id?.toString(),
+    created_at: (n as any).createdAt ?? (n as any).created_at,
   }));
 }
