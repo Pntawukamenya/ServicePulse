@@ -280,6 +280,185 @@ export async function requestPasswordReset(identifier: string): Promise<void> {
   await sendPasswordResetOtp(identifier, identifierType, otp);
 }
 
+export async function requestSignInOtp(identifier: string): Promise<void> {
+  const isEmail = identifier.includes('@');
+  const identifierType: IdentifierType = isEmail ? 'email' : 'phone';
+  const email = isEmail ? identifier.trim().toLowerCase() : null;
+  const phoneNumber = !isEmail ? normalizePhone(identifier) : null;
+  const lookupId = email || phoneNumber;
+
+  const user = await User.findOne(
+    email ? { email } : { phone_number: phoneNumber }
+  ).lean();
+
+  if (!user) {
+    throw new Error('Account not found');
+  }
+
+  if (user.status !== 'active') {
+    throw new Error('Account is not active. Please verify your account first.');
+  }
+
+  const otp = generateOtp();
+  const otpHash = await bcrypt.hash(otp, 10);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  // Use OtpVerification for sign-in (similar to registration)
+  await OtpVerification.create({
+    identifier: lookupId!,
+    identifier_type: identifierType,
+    otp_code_hash: otpHash,
+    expires_at: expiresAt,
+  });
+
+  await sendOtpToIdentifier(identifier, identifierType, otp);
+}
+
+export async function signInWithOtp(data: VerifyOtpData) {
+  const { identifier, identifierType, otp } = data;
+
+  const email = identifierType === 'email' ? identifier.trim().toLowerCase() : null;
+  const phoneNumber = identifierType === 'phone' ? normalizePhone(identifier) : null;
+  const lookupId = email || phoneNumber;
+
+  const candidates = await OtpVerification.find({
+    identifier: lookupId,
+    identifier_type: identifierType,
+    used_at: null,
+    expires_at: { $gte: new Date() },
+  })
+    .sort({ created_at: -1 })
+    .lean();
+
+  let otpRecord: { _id: any } | null = null;
+  for (const c of candidates) {
+    const hash = (c as any).otp_code_hash;
+    if (!hash) continue;
+    const match = await bcrypt.compare(otp, hash);
+    if (match) {
+      otpRecord = c;
+      break;
+    }
+  }
+
+  if (!otpRecord) {
+    throw new Error('Invalid or expired verification code');
+  }
+
+  await OtpVerification.updateOne(
+    { _id: otpRecord._id },
+    { $set: { used_at: new Date() } }
+  );
+
+  const user = await User.findOne(
+    identifierType === 'email' ? { email: lookupId } : { phone_number: lookupId }
+  ).lean();
+
+  if (!user || user.status !== 'active') {
+    throw new Error('Account not found or not active');
+  }
+
+  const token = generateToken({
+    userId: user._id.toString(),
+    role: user.role,
+    agencyId: user.agency_id?.toString(),
+    agencyCode: user.agency_code || undefined,
+  });
+
+  return {
+    user: formatUser(user),
+    token,
+  };
+}
+
+/**
+ * Register user via USSD (no OTP required - phone already verified by telecom)
+ */
+export async function registerUserUssd(data: RegisterData & { fullName?: string }) {
+  const { identifier, identifierType, password, role, agencyCode, district, sector, cell, village, termsAccepted, fullName } = data;
+
+  if (!termsAccepted) {
+    throw new Error('Terms and conditions must be accepted');
+  }
+
+  const email = identifierType === 'email' ? identifier.trim().toLowerCase() : null;
+  const phoneNumber = identifierType === 'phone' ? normalizePhone(identifier) : null;
+
+  const existingUser = await User.findOne(
+    email ? { email } : { phone_number: phoneNumber! }
+  ).lean();
+
+  if (existingUser) {
+    throw new Error(identifierType === 'email' ? 'User with this email already exists' : 'User with this phone number already exists');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  let location: string | null = null;
+  if (role === 'citizen' && district && sector) {
+    const parts = [district.trim(), sector.trim()];
+    if (cell?.trim()) parts.push(cell.trim());
+    if (village?.trim()) parts.push(village.trim());
+    location = parts.join(', ');
+  }
+
+  // For USSD, create account as 'active' immediately (phone verified by telecom)
+  const user = await User.create({
+    email,
+    phone_number: phoneNumber,
+    password_hash: hashedPassword,
+    full_name: fullName || null,
+    location,
+    identifier_type: identifierType,
+    role,
+    agency_code: agencyCode || null,
+    status: 'active', // Directly active for USSD users
+    terms_accepted: true,
+    sms_opt_in: true, // Auto-opt-in for USSD users
+  });
+
+  const token = generateToken({
+    userId: user.id,
+    role: user.role,
+    agencyId: user.agency_id?.toString(),
+    agencyCode: user.agency_code || undefined,
+  });
+
+  return {
+    user: formatUser(user),
+    token,
+    requiresOtp: false,
+  };
+}
+
+/**
+ * Sign in via USSD (no OTP required - phone number is authentication)
+ */
+export async function signInUssd(phoneNumber: string) {
+  const normalizedPhone = normalizePhone(phoneNumber);
+
+  const user = await User.findOne({ phone_number: normalizedPhone }).lean();
+
+  if (!user) {
+    throw new Error('Account not found. Please sign up first.');
+  }
+
+  if (user.status !== 'active') {
+    throw new Error('Account is not active. Please contact support.');
+  }
+
+  const token = generateToken({
+    userId: user._id.toString(),
+    role: user.role,
+    agencyId: user.agency_id?.toString(),
+    agencyCode: user.agency_code || undefined,
+  });
+
+  return {
+    user: formatUser(user),
+    token,
+  };
+}
+
 export async function resetPasswordWithOtp(
   identifier: string,
   otp: string,
