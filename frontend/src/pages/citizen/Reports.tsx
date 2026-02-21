@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getServiceLabelKey } from '../../config/services';
@@ -17,14 +17,17 @@ interface Report {
 
 export default function CitizenReports() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'status'>('newest');
 
+  // Refetch when on reports list so list stays in sync with DB (e.g. when navigating back from report detail)
   useEffect(() => {
+    if (pathname !== '/citizen/reports') return;
     fetchReports();
-  }, []);
+  }, [pathname]);
 
   const fetchReports = async () => {
     try {

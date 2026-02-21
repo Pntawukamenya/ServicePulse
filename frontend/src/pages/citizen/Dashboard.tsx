@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -39,14 +39,17 @@ const StatCard = ({ icon, label, value, color = 'text-neutral-900 dark:text-whit
 
 export default function CitizenDashboard() {
   const { user } = useAuthStore();
+  const { pathname } = useLocation();
   const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats>({ totalReports: 0, pendingReports: 0, resolvedReports: 0, resolutionRate: 0 });
   const [recentReports, setRecentReports] = useState<RecentReport[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Refetch when user lands on dashboard so stats stay in sync with DB (e.g. after submitting a report)
   useEffect(() => {
+    if (pathname !== '/citizen/dashboard') return;
     fetchStats();
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     const onVisibilityChange = () => {

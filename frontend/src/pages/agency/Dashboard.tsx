@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -47,6 +47,7 @@ interface RecentAlert {
 
 export default function AgencyDashboard() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
   const { user } = useAuthStore();
   const [pendingApprovals, setPendingApprovals] = useState<PendingUser[]>([]);
   const [stats, setStats] = useState<DashboardStats>({ totalAlerts: 0, totalReports: 0, pendingReports: 0, resolvedReports: 0 });
@@ -55,12 +56,14 @@ export default function AgencyDashboard() {
   const [recentAlerts, setRecentAlerts] = useState<RecentAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Refetch when user lands on dashboard so stats/recent activity stay in sync with DB (e.g. after updating a report or creating an alert)
   useEffect(() => {
+    if (pathname !== '/agency/dashboard') return;
     fetchStats();
     if (user?.role === 'agency_admin') {
       api.get('/approvals').then((r) => setPendingApprovals(r.data)).catch(() => {});
     }
-  }, [user?.role]);
+  }, [pathname, user?.role]);
 
   useEffect(() => {
     const onVisibilityChange = () => {

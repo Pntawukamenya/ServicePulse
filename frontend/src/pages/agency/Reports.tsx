@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAuthStore } from '../../store/authStore';
@@ -24,6 +24,7 @@ interface Report {
 
 export default function AgencyReports() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
   const { user } = useAuthStore();
   const [searchParams] = useSearchParams();
   const agencyServices = getServicesByAgency((user?.agencyCode as AgencyCode) || 'REG');
@@ -42,9 +43,11 @@ export default function AgencyReports() {
     setFilters({ location, status, serviceType });
   }, [searchParams]);
 
+  // Refetch when on reports list or when filters change so list stays in sync with DB (e.g. after updating status from detail)
   useEffect(() => {
+    if (pathname !== '/agency/reports') return;
     fetchReports();
-  }, [filters]);
+  }, [filters, pathname]);
 
   const fetchReports = async () => {
     try {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -32,6 +33,7 @@ interface Notification {
 
 export default function AgencyAlerts() {
   const { t } = useTranslation();
+  const { pathname } = useLocation();
   const { user } = useAuthStore();
   const agencyServices = getServicesByAgency((user?.agencyCode as AgencyCode) || 'REG');
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -55,8 +57,9 @@ export default function AgencyAlerts() {
   const village = watch('village');
 
   useEffect(() => {
+    if (pathname !== '/agency/alerts') return;
     fetchNotifications();
-  }, []);
+  }, [pathname]);
 
   const fetchNotifications = async () => {
     try {

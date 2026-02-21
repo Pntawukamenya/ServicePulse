@@ -223,7 +223,7 @@ export async function loginUser(data: LoginData) {
   );
 
   if (!user) {
-    throw new Error('Invalid identifier or password');
+    throw new Error('Invalid email/phone or password');
   }
 
   if (user.status === 'pending_otp') {
@@ -236,7 +236,7 @@ export async function loginUser(data: LoginData) {
 
   const isValid = await bcrypt.compare(password, user.password_hash);
   if (!isValid) {
-    throw new Error('Invalid identifier or password');
+    throw new Error('Invalid email/phone or password');
   }
 
   const token = generateToken({

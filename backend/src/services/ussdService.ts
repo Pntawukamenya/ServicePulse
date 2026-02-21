@@ -325,8 +325,8 @@ async function handleSignupSector(sessionId: string, input: string, language: Us
 
   const provinceIndex = session?.data?.province_index;
   const districtIndex = session?.data?.district_index;
-  
-  if (provinceIndex === undefined || districtIndex === undefined) {
+
+  if (typeof provinceIndex !== 'number' || typeof districtIndex !== 'number') {
     return {
       message: formatUssdMessage(t.sessionExpired),
       shouldEnd: true,

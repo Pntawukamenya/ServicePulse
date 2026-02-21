@@ -20,8 +20,6 @@ export interface UssdTranslations {
   selectProvince: string;
   selectDistrict: string;
   selectSector: string;
-  enterDistrict: string;
-  enterSector: string;
   selectServices: string;
   reg: string;
   wasac: string;
@@ -58,8 +56,6 @@ const translations: Record<UssdLanguage, UssdTranslations> = {
     selectProvince: 'Hitamo intara:\n1. Kigali\n2. Amajyaruguru\n3. Amajyepfo\n4. Iburasirazuba\n5. Iburengerazuba\n\nHitamo:',
     selectDistrict: 'Hitamo akarere:',
     selectSector: 'Hitamo umurenge:',
-    enterDistrict: 'Andika akarere:',
-    enterSector: 'Andika umurenge:',
     selectServices: 'Hitamo serivisi:\n1. REG\n2. WASAC\n3. Zihutirwa\n0. Zose\n\nHitamo:',
     reg: 'REG',
     wasac: 'WASAC',
@@ -72,10 +68,10 @@ const translations: Record<UssdLanguage, UssdTranslations> = {
     youWillReceiveAlerts: 'Uzahabwa amatangazo.',
     signingIn: 'Injira',
     welcomeBack: 'Murakaza neza',
-    signedIn: 'Winjiriye.',
+    signedIn: 'Winjiye.',
     error: 'Ikosa:',
-    accountNotFound: 'Konti ntiyabonetse. Mbere iyandikishe.',
-    registrationFailed: 'Gushyiraho konti byanze.',
+    accountNotFound: 'Konti ntiyabonetse. Iyandikishe.',
+    registrationFailed: 'Kwiyandikisha byanze.',
     signInFailed: 'Kwinjira byanze.',
     sessionExpired: 'Igihe cyahagaze. Ongera utangire.',
   },
@@ -94,8 +90,6 @@ const translations: Record<UssdLanguage, UssdTranslations> = {
     selectProvince: 'Select province:\n1. Kigali\n2. Northern\n3. Southern\n4. Eastern\n5. Western\n\nSelect:',
     selectDistrict: 'Select district:',
     selectSector: 'Select sector:',
-    enterDistrict: 'Enter district:',
-    enterSector: 'Enter sector:',
     selectServices: 'Select services:\n1. REG\n2. WASAC\n3. Emergency\n0. All\n\nChoice:',
     reg: 'REG',
     wasac: 'WASAC',
@@ -130,8 +124,6 @@ const translations: Record<UssdLanguage, UssdTranslations> = {
     selectProvince: 'Choisissez la province:\n1. Kigali\n2. Nord\n3. Sud\n4. Est\n5. Ouest\n\nChoisissez:',
     selectDistrict: 'Choisissez le district:',
     selectSector: 'Choisissez le secteur:',
-    enterDistrict: 'Entrez le district:',
-    enterSector: 'Entrez le secteur:',
     selectServices: 'Choisissez les services:\n1. REG\n2. WASAC\n3. Urgence\n0. Tous\n\nChoix:',
     reg: 'REG',
     wasac: 'WASAC',

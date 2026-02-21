@@ -52,7 +52,8 @@ function ReportDetailPage() {
     setUpdating(true);
     try {
       await api.put(`/reports/${id}/status`, { status: newStatus });
-      setReport((r) => (r ? { ...r, status: newStatus } : null));
+      const res = await api.get(`/reports/${id}`);
+      setReport(res.data);
     } catch (err) {
       console.error(err);
     } finally {
