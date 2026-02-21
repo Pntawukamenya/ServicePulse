@@ -43,15 +43,19 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   if (isAgencyDashboard && (isAgency() || isAdmin())) {
+    const agencyNavItems = [
+      { to: '/agency/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
+      { to: '/agency/alerts', label: t('nav.alerts'), icon: <DASHBOARD_ICONS.AlertIcon /> },
+      { to: '/agency/reports', label: t('nav.reports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
+      ...(user?.role === 'agency_admin' || user?.role === 'super_admin'
+        ? [{ to: '/agency/approvals', label: t('nav.approvals'), icon: <DASHBOARD_ICONS.ApprovalsIcon /> }]
+        : []),
+      { to: '/agency/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
+    ];
     return (
       <DashboardLayout
         roleLabel={t('nav.roleAgency')}
-        navItems={[
-          { to: '/agency/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
-          { to: '/agency/alerts', label: t('nav.alerts'), icon: <DASHBOARD_ICONS.AlertIcon /> },
-          { to: '/agency/reports', label: t('nav.reports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
-          { to: '/agency/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
-        ]}
+        navItems={agencyNavItems}
       >
         {children}
       </DashboardLayout>
@@ -93,6 +97,11 @@ export default function Layout({ children }: LayoutProps) {
                       <Link to="/agency/reports" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.reports')}
                       </Link>
+                      {(user?.role === 'agency_admin' || user?.role === 'super_admin') && (
+                        <Link to="/agency/approvals" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
+                          {t('nav.approvals')}
+                        </Link>
+                      )}
                       <Link to="/agency/profile" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.profile')}
                       </Link>
@@ -197,6 +206,11 @@ export default function Layout({ children }: LayoutProps) {
                     <Link to="/agency/reports" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
                       {t('nav.reports')}
                     </Link>
+                    {(user?.role === 'agency_admin' || user?.role === 'super_admin') && (
+                      <Link to="/agency/approvals" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.approvals')}
+                      </Link>
+                    )}
                     <Link to="/agency/profile" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
                       {t('nav.profile')}
                     </Link>

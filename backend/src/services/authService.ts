@@ -12,7 +12,8 @@ export type UserRole = 'citizen' | 'agency_employee' | 'agency_admin' | 'super_a
 
 export interface RegisterData {
   identifier: string;
-  identifierType: IdentifierType;
+  /** Optional: if not provided or inconsistent with identifier, detected automatically */
+  identifierType?: IdentifierType;
   password: string;
   role: 'citizen' | 'agency_employee';
   agencyCode?: string;
@@ -43,6 +44,19 @@ function normalizePhone(phone: string): string {
   if (p.startsWith('250')) return `+${p}`;
   if (p.startsWith('0')) return '+250' + p.slice(1);
   return '+250' + p;
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_MIN_DIGITS = 9;
+
+/** Detect whether the user entered an email or phone number. Validates format. */
+export function detectIdentifierType(identifier: string): IdentifierType {
+  const trimmed = identifier.trim();
+  if (!trimmed) throw new Error('Email or phone number is required');
+  if (EMAIL_REGEX.test(trimmed)) return 'email';
+  const digits = trimmed.replace(/\D/g, '');
+  if (digits.length >= PHONE_MIN_DIGITS) return 'phone';
+  throw new Error('Please enter a valid email address or phone number');
 }
 
 async function sendOtpToIdentifier(identifier: string, identifierType: IdentifierType, otp: string): Promise<void> {
@@ -87,11 +101,14 @@ function formatUser(user: any) {
 }
 
 export async function registerUser(data: RegisterData) {
-  const { identifier, identifierType, password, role, agencyCode, district, sector, cell, village, termsAccepted } = data;
+  const { identifier, password, role, agencyCode, district, sector, cell, village, termsAccepted } = data;
 
   if (!termsAccepted) {
     throw new Error('Terms and conditions must be accepted');
   }
+
+  const detectedType = detectIdentifierType(identifier);
+  const identifierType = (data.identifierType && data.identifierType === detectedType) ? data.identifierType : detectedType;
 
   const email = identifierType === 'email' ? identifier.trim().toLowerCase() : null;
   const phoneNumber = identifierType === 'phone' ? normalizePhone(identifier) : null;

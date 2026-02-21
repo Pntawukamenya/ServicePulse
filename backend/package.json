@@ -10,7 +10,8 @@
     "type-check": "tsc --noEmit",
     "seed": "tsx src/scripts/seed.ts",
     "seed:reports": "tsx src/scripts/seedReports.ts",
-    "migrate:otp-hash": "tsx src/scripts/migrate-otp-hash.ts"
+    "migrate:otp-hash": "tsx src/scripts/migrate-otp-hash.ts",
+    "fix:indexes": "tsx src/scripts/fix-user-indexes.ts"
   },
   "keywords": [],
   "author": "",

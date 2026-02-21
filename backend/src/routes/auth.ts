@@ -10,7 +10,7 @@ router.post(
   '/register',
   validate([
     body('identifier').trim().notEmpty().withMessage('Email or phone number is required'),
-    body('identifierType').isIn(['email', 'phone']).withMessage('Invalid identifier type'),
+    body('identifierType').optional().isIn(['email', 'phone']).withMessage('Invalid identifier type'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
     body('role').isIn(['citizen', 'agency_employee']).withMessage('Invalid role'),
     body('termsAccepted').custom((v) => v === true || v === 'true').withMessage('Terms must be accepted'),

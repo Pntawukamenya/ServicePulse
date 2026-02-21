@@ -25,8 +25,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-userSchema.index({ email: 1 }, { unique: true, sparse: true });
-userSchema.index({ phone_number: 1 }, { unique: true, sparse: true });
+// email and phone_number indexes are created in server startup with sparse: true
+// so multiple users can have null email or null phone (see ensureSparseUniqueIndexes)
 userSchema.index({ agency_code: 1, status: 1 });
 userSchema.index({ role: 1 });
 

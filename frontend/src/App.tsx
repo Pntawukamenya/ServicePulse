@@ -22,6 +22,7 @@ import ReportDetail from './pages/ReportDetail';
 import AgencyDashboard from './pages/agency/Dashboard';
 import AgencyReports from './pages/agency/Reports';
 import AgencyProfile from './pages/agency/Profile';
+import AgencyApprovals from './pages/agency/Approvals';
 
 // Lazy-loaded pages (contain Rwanda locations ~230KB)
 const Register = lazy(() => import('./pages/Register'));
@@ -128,6 +129,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
                 <AgencyProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agency/approvals"
+            element={
+              <ProtectedRoute allowedRoles={['agency_admin', 'super_admin']}>
+                <AgencyApprovals />
               </ProtectedRoute>
             }
           />

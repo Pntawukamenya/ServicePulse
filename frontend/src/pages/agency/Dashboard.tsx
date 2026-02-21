@@ -13,14 +13,6 @@ interface DashboardStats {
   resolvedReports: number;
 }
 
-interface PendingUser {
-  id: string;
-  email: string | null;
-  phone_number: string | null;
-  full_name: string | null;
-  created_at: string;
-}
-
 interface Cluster {
   location: string;
   count: number;
@@ -49,7 +41,6 @@ export default function AgencyDashboard() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { user } = useAuthStore();
-  const [pendingApprovals, setPendingApprovals] = useState<PendingUser[]>([]);
   const [stats, setStats] = useState<DashboardStats>({ totalAlerts: 0, totalReports: 0, pendingReports: 0, resolvedReports: 0 });
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [recentReports, setRecentReports] = useState<RecentReport[]>([]);
@@ -60,32 +51,15 @@ export default function AgencyDashboard() {
   useEffect(() => {
     if (pathname !== '/agency/dashboard') return;
     fetchStats();
-    if (user?.role === 'agency_admin') {
-      api.get('/approvals').then((r) => setPendingApprovals(r.data)).catch(() => {});
-    }
-  }, [pathname, user?.role]);
+  }, [pathname]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchStats();
-        if (user?.role === 'agency_admin') {
-          api.get('/approvals').then((r) => setPendingApprovals(r.data)).catch(() => {});
-        }
-      }
+      if (document.visibilityState === 'visible') fetchStats();
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, [user?.role]);
-
-  const handleApprove = async (userId: string) => {
-    try {
-      await api.post(`/approvals/${userId}/approve`);
-      setPendingApprovals((p) => p.filter((u) => u.id !== userId));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -241,22 +215,6 @@ export default function AgencyDashboard() {
           </div>
         </div>
       </div>
-
-      {user?.role === 'agency_admin' && pendingApprovals.length > 0 && (
-        <div className="card mt-6">
-          <h2 className="text-xl font-semibold mb-4">{t('agency.pendingApprovals')}</h2>
-          <div className="space-y-3">
-            {pendingApprovals.map((u) => (
-              <div key={u.id} className="flex justify-between items-center py-3 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                <span className="text-sm">{u.email || u.phone_number || u.full_name || u.id}</span>
-                <button onClick={() => handleApprove(u.id)} className="btn btn-primary text-sm">
-                  {t('agency.approve')}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import cors from 'cors';
 import routes from './routes';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { connectDB } from './config/database';
+import User from './models/User';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,9 +29,29 @@ app.use('/api', routes);
 app.use(notFound);
 app.use(errorHandler);
 
+async function ensureSparseUniqueIndexes() {
+  const coll = User.collection;
+  await User.createCollection().catch(() => {});
+
+  await coll.dropIndex('phone_number_1').catch(() => {});
+  await coll.dropIndex('email_1').catch(() => {});
+
+  await coll.createIndex(
+    { phone_number: 1 },
+    { unique: true, sparse: true, name: 'phone_number_1' }
+  );
+  await coll.createIndex(
+    { email: 1 },
+    { unique: true, sparse: true, name: 'email_1' }
+  );
+
+  await User.syncIndexes().catch(() => {});
+}
+
 async function startServer() {
   try {
     await connectDB();
+    await ensureSparseUniqueIndexes();
     const env = process.env.NODE_ENV || 'development';
     console.log('\n--- ServicePulse Backend ---');
     console.log(`Server:  OK  (port ${PORT}, ${env})`);

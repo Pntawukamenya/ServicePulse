@@ -24,6 +24,7 @@ interface RegisterForm {
 export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPendingApproval, setShowPendingApproval] = useState(false);
   const [needsOtp, setNeedsOtp] = useState(false);
   const [otpIdentifier, setOtpIdentifier] = useState('');
   const [otpIdentifierType, setOtpIdentifierType] = useState<IdentifierType>('email');
@@ -89,8 +90,7 @@ export default function Register() {
         setOtpIdentifier(data.identifier.trim());
         setOtpIdentifierType(identifierType);
       } else {
-        // Agency employee - pending approval
-        setError(response.data.message || t('auth.pendingApproval'));
+        setShowPendingApproval(true);
       }
     } catch (err: any) {
       setError(err.response?.data?.error || t('authErrors.registerFailed'));
@@ -119,6 +119,34 @@ export default function Register() {
       setOtpLoading(false);
     }
   };
+
+  if (showPendingApproval) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center bg-gradient-to-b from-primary-50/30 via-neutral-50 to-neutral-50 dark:from-primary-950/20 dark:via-neutral-950 dark:to-neutral-950">
+        <div className="w-full max-w-lg mx-auto px-6 sm:px-8 lg:px-12 py-8 sm:py-12">
+          <div className="auth-card">
+            <div className="flex gap-4 p-4 rounded-xl bg-primary-50 dark:bg-primary-950/30 border border-primary-200 dark:border-primary-800">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center" aria-hidden>
+                <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{t('auth.pendingApprovalTitle')}</h2>
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{t('auth.pendingApprovalBody')}</p>
+                <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">{t('auth.pendingApprovalNext')}</p>
+              </div>
+            </div>
+            <div className="mt-6 text-center">
+              <Link to="/login" className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 hover:bg-primary-100 dark:hover:bg-primary-900/50 border border-primary-200 dark:border-primary-800 transition-colors">
+                {t('auth.backToLogin')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (needsOtp) {
     return (
@@ -194,9 +222,14 @@ export default function Register() {
             )}
 
             <div>
+              <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('auth.emailOrPhone')}
+              </label>
               <input
                 id="identifier"
                 type="text"
+                inputMode="text"
+                autoComplete="username"
                 {...register('identifier', { required: true })}
                 className="input w-full"
                 placeholder={t('auth.emailOrPhone')}
