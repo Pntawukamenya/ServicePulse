@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ServiceIconBadge } from './ServiceIcon';
 
 type Status = 'received' | 'in_progress' | 'resolved';
@@ -5,6 +6,8 @@ type Status = 'received' | 'in_progress' | 'resolved';
 interface ReportCardProps {
   id: string;
   serviceType: string;
+  /** When set, the whole card is clickable and links to this path (e.g. /agency/reports/:id) */
+  to?: string;
   /** Compact landscape layout for grid (3 per row) */
   compact?: boolean;
   /** Translated or display label for the service type */
@@ -28,6 +31,8 @@ interface ReportCardProps {
   reportedByLabel?: string;
   markInProgressLabel?: string;
   markResolvedLabel?: string;
+  /** From backend prioritization: high | medium | low */
+  priority_level?: 'high' | 'medium' | 'low';
 }
 
 function getReportId(id: string, prefix = 'SP') {
@@ -57,7 +62,20 @@ export default function ReportCard({
   reportedByLabel = 'Reported by',
   markInProgressLabel = 'Mark in progress',
   markResolvedLabel = 'Mark resolved',
+  priority_level,
+  to,
 }: ReportCardProps) {
+  const priorityBadge =
+    priority_level === 'high' ? (
+      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" title="High priority">
+        Urgent
+      </span>
+    ) : priority_level === 'medium' ? (
+      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200" title="Medium priority">
+        Priority
+      </span>
+    ) : null;
+
   const LocationIcon = () => (
     <svg className="w-3.5 h-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -65,16 +83,21 @@ export default function ReportCard({
     </svg>
   );
 
+  const cardClass = 'card overflow-hidden transition-shadow duration-200 hover:shadow-md' + (to ? ' cursor-pointer' : '');
+
   if (compact) {
-    return (
-      <div className="card overflow-hidden transition-shadow duration-200 hover:shadow-md p-4">
+    const inner = (
+      <div className={cardClass + ' p-4'}>
         <div className="flex gap-3">
           <ServiceIconBadge serviceCode={serviceType} size="sm" />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
-                {displayLabel ?? serviceType}
-              </h3>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h3 className="text-sm font-semibold text-neutral-900 dark:text-white truncate">
+                  {displayLabel ?? serviceType}
+                </h3>
+                {priorityBadge}
+              </div>
               <span className={`${statusBadge(status)} shrink-0 text-[11px] px-2 py-0.5`}>{statusLabel(status)}</span>
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate flex items-center gap-1">
@@ -90,7 +113,7 @@ export default function ReportCard({
             <div className={`mt-4 flex items-center justify-between gap-3 flex-wrap ${showActions ? 'pt-3 border-t border-neutral-100 dark:border-neutral-800' : ''}`}>
               <span className="text-[11px] text-neutral-400 dark:text-neutral-500">{formatDate(created_at)}</span>
               {showActions && (
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                   {status !== 'in_progress' && onMarkInProgress && (
                     <button onClick={(e) => { e.stopPropagation(); onMarkInProgress(); }} className="btn btn-outline text-xs px-3 py-2 h-9 min-w-0">
                       {markInProgressLabel}
@@ -108,19 +131,23 @@ export default function ReportCard({
         </div>
       </div>
     );
+    return to ? <Link to={to} className="block">{inner}</Link> : inner;
   }
 
-  return (
-    <div className="card overflow-hidden transition-shadow duration-200 hover:shadow-md">
+  const fullCard = (
+    <div className={cardClass}>
       <div className="flex gap-4">
         <ServiceIconBadge serviceCode={serviceType} />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-            <div>
-              <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400">{getReportId(id, reportIdPrefix)}</span>
-              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mt-0.5">
-                {displayLabel ?? serviceType}
-              </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div>
+                <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400">{getReportId(id, reportIdPrefix)}</span>
+                <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mt-0.5">
+                  {displayLabel ?? serviceType}
+                </h3>
+              </div>
+              {priorityBadge}
             </div>
             <span className={`${statusBadge(status)} shrink-0`}>{statusLabel(status)}</span>
           </div>
@@ -143,14 +170,14 @@ export default function ReportCard({
               )}
             </div>
             {showActions && (
-              <div className="flex gap-3">
+              <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
                 {status !== 'in_progress' && onMarkInProgress && (
-                  <button onClick={onMarkInProgress} className="btn btn-outline text-sm">
+                  <button onClick={(e) => { e.stopPropagation(); onMarkInProgress(); }} className="btn btn-outline text-sm">
                     {markInProgressLabel}
                   </button>
                 )}
                 {status !== 'resolved' && onMarkResolved && (
-                  <button onClick={onMarkResolved} className="btn btn-primary text-sm">
+                  <button onClick={(e) => { e.stopPropagation(); onMarkResolved(); }} className="btn btn-primary text-sm">
                     {markResolvedLabel}
                   </button>
                 )}
@@ -161,4 +188,5 @@ export default function ReportCard({
       </div>
     </div>
   );
+  return to ? <Link to={to} className="block">{fullCard}</Link> : fullCard;
 }

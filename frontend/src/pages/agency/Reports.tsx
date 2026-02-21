@@ -203,6 +203,7 @@ export default function AgencyReports() {
             <ReportCard
               key={report.id}
               compact
+              to={`/agency/reports/${report.id}`}
               id={report.id}
               serviceType={report.service_type}
               displayLabel={getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : undefined}
@@ -222,6 +223,7 @@ export default function AgencyReports() {
               reportedByLabel={t('agency.reportedBy')}
               markInProgressLabel={t('agency.markInProgress')}
               markResolvedLabel={t('agency.markResolved')}
+              priority_level={(report as any).priority_level}
               onMarkInProgress={() => updateStatus(report.id, 'in_progress')}
               onMarkResolved={() => updateStatus(report.id, 'resolved')}
             />

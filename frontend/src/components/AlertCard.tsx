@@ -15,6 +15,8 @@ interface AlertCardProps {
   formatDate: (d?: string) => string;
   created_at?: string;
   createdAt?: string;
+  /** From backend prioritization: high | medium | low */
+  priority_level?: 'high' | 'medium' | 'low';
 }
 
 export default function AlertCard({
@@ -29,9 +31,20 @@ export default function AlertCard({
   formatDate,
   created_at,
   createdAt,
+  priority_level,
 }: AlertCardProps) {
   const dateStr = created_at ?? createdAt;
   const progress = totalRecipients > 0 ? Math.round((deliveryCount / totalRecipients) * 100) : 0;
+  const priorityBadge =
+    priority_level === 'high' ? (
+      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" title="High priority">
+        Urgent
+      </span>
+    ) : priority_level === 'medium' ? (
+      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200" title="Medium priority">
+        Priority
+      </span>
+    ) : null;
 
   return (
     <div className="card overflow-hidden transition-shadow duration-200 hover:shadow-md">
@@ -39,9 +52,12 @@ export default function AlertCard({
         <ServiceIconBadge serviceCode={serviceType} />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-              {displayLabel ?? serviceType}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                {displayLabel ?? serviceType}
+              </h3>
+              {priorityBadge}
+            </div>
             <span className="text-xs text-neutral-500 dark:text-neutral-400 shrink-0">
               {formatDate(dateStr)}
             </span>

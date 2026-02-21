@@ -32,6 +32,8 @@ interface RecentReport {
   location: string;
   status: string;
   created_at: string;
+  priority_score?: number;
+  priority_level?: 'high' | 'medium' | 'low';
 }
 
 interface RecentAlert {
@@ -39,6 +41,8 @@ interface RecentAlert {
   service_type: string;
   message: string;
   created_at: string;
+  priority_score?: number;
+  priority_level?: 'high' | 'medium' | 'low';
 }
 
 export default function AgencyDashboard() {
@@ -109,16 +113,21 @@ export default function AgencyDashboard() {
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  // Mix reports and alerts into a single chronological feed
+  // Mix reports and alerts; sort by priority (high first) then by date
   const recentActivity = useMemo(() => {
     const items: Array<
-      | { type: 'report'; id: string; createdAt: string; data: RecentReport }
-      | { type: 'alert'; id: string; createdAt: string; data: RecentAlert }
+      | { type: 'report'; id: string; createdAt: string; priorityScore: number; data: RecentReport }
+      | { type: 'alert'; id: string; createdAt: string; priorityScore: number; data: RecentAlert }
     > = [
-      ...recentReports.map((r) => ({ type: 'report' as const, id: r.id, createdAt: r.created_at, data: r })),
-      ...recentAlerts.map((a) => ({ type: 'alert' as const, id: a.id, createdAt: (a as any).created_at ?? (a as any).createdAt ?? '', data: a })),
+      ...recentReports.map((r) => ({ type: 'report' as const, id: r.id, createdAt: r.created_at, priorityScore: (r as any).priority_score ?? 0, data: r })),
+      ...recentAlerts.map((a) => ({ type: 'alert' as const, id: a.id, createdAt: (a as any).created_at ?? (a as any).createdAt ?? '', priorityScore: (a as any).priority_score ?? 0, data: a })),
     ];
-    return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6);
+    return items
+      .sort((a, b) => {
+        if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      })
+      .slice(0, 6);
   }, [recentReports, recentAlerts]);
 
   if (loading) {
@@ -168,10 +177,14 @@ export default function AgencyDashboard() {
             <ul className="space-y-2">
               {recentActivity.map((item) =>
                 item.type === 'report' ? (
-                  <Link key={`r-${item.id}`} to="/agency/reports" className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
+                  <Link key={`r-${item.id}`} to={`/agency/reports/${item.id}`} className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
                     <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <span className="block text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="block text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</span>
+                        {item.data.priority_level === 'high' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Urgent</span>}
+                        {item.data.priority_level === 'medium' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">Priority</span>}
+                      </div>
                       <span className="text-xs text-neutral-500">{formatDate(item.data.created_at)} · Report</span>
                     </div>
                     <span className={`shrink-0 text-xs ${item.data.status === 'resolved' ? 'badge-success' : item.data.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}>
@@ -182,7 +195,11 @@ export default function AgencyDashboard() {
                   <Link key={`a-${item.id}`} to="/agency/alerts" className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
                     <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</p>
+                        {item.data.priority_level === 'high' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Urgent</span>}
+                        {item.data.priority_level === 'medium' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">Priority</span>}
+                      </div>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{item.data.message}</p>
                       <span className="text-xs text-neutral-400">{formatDate(item.createdAt)} · Alert</span>
                     </div>

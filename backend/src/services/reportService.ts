@@ -1,6 +1,7 @@
 import Report from '../models/Report';
 import User from '../models/User';
 import { getAgencyCode } from './agencyService';
+import { prioritizeReports } from './prioritizationService';
 
 export interface CreateReportData {
   userId: string;
@@ -86,7 +87,7 @@ export async function getReportsByAgency(agencyId: string, filters?: { serviceTy
     .sort({ createdAt: -1 })
     .lean();
 
-  return reports.map((r) => {
+  const mapped = reports.map((r) => {
     const u = (r as any).user_id;
     const users = u
       ? { full_name: u.full_name, phone_number: u.phone_number, email: u.email }
@@ -100,6 +101,61 @@ export async function getReportsByAgency(agencyId: string, filters?: { serviceTy
       updated_at: (r as any).updatedAt ?? (r as any).updated_at,
     };
   });
+
+  return prioritizeReports(mapped);
+}
+
+/** Get a single report by ID. Citizen: own reports only. Agency: reports for their service types. */
+export async function getReportById(
+  reportId: string,
+  opts: { userId?: string; userRole?: string; userAgencyId?: string }
+) {
+  const report = await Report.findById(reportId).lean();
+  if (!report) {
+    throw new Error('Report not found');
+  }
+
+  const role = opts.userRole || '';
+
+  if (role === 'citizen') {
+    if (!opts.userId || (report as any).user_id?.toString() !== opts.userId) {
+      throw new Error('Report not found');
+    }
+    return {
+      ...report,
+      id: (report as any)._id.toString(),
+      user_id: (report as any).user_id?.toString(),
+      created_at: (report as any).createdAt ?? (report as any).created_at,
+      updated_at: (report as any).updatedAt ?? (report as any).updated_at,
+    };
+  }
+
+  if (['agency_admin', 'super_admin', 'agency', 'admin'].includes(role)) {
+    if (role !== 'super_admin' && opts.userAgencyId) {
+      const agencyCode = await getAgencyCode(opts.userAgencyId);
+      const serviceType = (report as any).service_type || '';
+      const belongsToAgency = agencyCode && (serviceType === agencyCode || serviceType.startsWith(agencyCode + '_'));
+      if (!belongsToAgency) {
+        throw new Error('Report not found');
+      }
+    }
+    const populated = await Report.findById(reportId)
+      .populate('user_id', 'full_name phone_number email')
+      .lean();
+    const u = (populated as any)?.user_id;
+    return {
+      ...(populated || report),
+      id: ((populated || report) as any)._id.toString(),
+      user_id: u?._id?.toString() || (report as any).user_id?.toString(),
+      users: u
+        ? { full_name: u.full_name, phone_number: u.phone_number, email: u.email }
+        : { full_name: null, phone_number: null, email: null },
+      created_at: ((populated || report) as any).createdAt ?? ((populated || report) as any).created_at,
+      updated_at: ((populated || report) as any).updatedAt ?? ((populated || report) as any).updated_at,
+    };
+  }
+
+  throw new Error('Report not found');
 }
 
 export async function updateReportStatus(data: UpdateReportStatusData) {
@@ -186,7 +242,7 @@ export async function getAllReports(filters?: { serviceType?: string; location?:
     .sort({ createdAt: -1 })
     .lean();
 
-  return reports.map((r) => {
+  const mapped = reports.map((r) => {
     const u = (r as any).user_id;
     return {
       ...r,
@@ -197,6 +253,8 @@ export async function getAllReports(filters?: { serviceType?: string; location?:
       updated_at: (r as any).updatedAt ?? (r as any).updated_at,
     };
   });
+
+  return prioritizeReports(mapped);
 }
 
 /** Super admin: get clusters across all agencies */

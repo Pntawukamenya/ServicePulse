@@ -140,6 +140,7 @@ export default function CitizenReports() {
             <ReportCard
               key={report.id}
               compact
+              to={`/citizen/reports/${report.id}`}
               id={report.id}
               serviceType={report.service_type}
               displayLabel={getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : undefined}

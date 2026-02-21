@@ -5,6 +5,7 @@ import {
   getReportsByUser,
   getReportsByAgency,
   getAllReports,
+  getReportById,
   updateReportStatus,
   getReportClusters,
   getAllReportClusters,
@@ -43,6 +44,25 @@ export const getMyReports = async (req: AuthRequest, res: Response): Promise<voi
   } catch (error: any) {
     logError(req, error.message, error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getOne = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const report = await getReportById(req.params.id, {
+      userId: req.userId,
+      userRole: req.userRole || undefined,
+      userAgencyId: req.userAgencyId,
+    });
+    res.status(200).json(report);
+  } catch (error: any) {
+    logError(req, error.message, error);
+    res.status(error.message === 'Report not found' ? 404 : 403).json({ error: error.message });
   }
 };
 

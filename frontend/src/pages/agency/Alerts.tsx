@@ -142,6 +142,7 @@ export default function AgencyAlerts() {
                     formatDate={formatDate}
                     created_at={notification.created_at}
                     createdAt={notification.createdAt}
+                    priority_level={(notification as any).priority_level}
                   />
                 ))}
               </div>

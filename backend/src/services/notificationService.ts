@@ -2,6 +2,7 @@ import Notification from '../models/Notification';
 import User from '../models/User';
 import { sendSMS } from '../config/sms';
 import { sendEmail } from '../config/email';
+import { prioritizeNotifications } from './prioritizationService';
 
 export interface CreateNotificationData {
   agencyId: string;
@@ -81,12 +82,14 @@ export async function getNotificationsByAgency(agencyId: string) {
     .sort({ createdAt: -1 })
     .lean();
 
-  return notifications.map((n) => ({
+  const mapped = notifications.map((n) => ({
     ...n,
     id: (n as any)._id.toString(),
     agency_id: (n as any).agency_id?.toString(),
     created_at: (n as any).createdAt ?? (n as any).created_at,
   }));
+
+  return prioritizeNotifications(mapped);
 }
 
 /** Super admin: get all notifications across all agencies */
@@ -95,10 +98,12 @@ export async function getAllNotifications() {
     .sort({ createdAt: -1 })
     .lean();
 
-  return notifications.map((n) => ({
+  const mapped = notifications.map((n) => ({
     ...n,
     id: (n as any)._id.toString(),
     agency_id: (n as any).agency_id?.toString(),
     created_at: (n as any).createdAt ?? (n as any).created_at,
   }));
+
+  return prioritizeNotifications(mapped);
 }

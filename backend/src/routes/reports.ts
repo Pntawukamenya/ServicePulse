@@ -4,6 +4,7 @@ import {
   create,
   getMyReports,
   getAgencyReports,
+  getOne,
   updateStatus,
   getClusters,
   remove,
@@ -27,11 +28,14 @@ router.post(
 );
 
 router.get('/my-reports', authenticate, requireRole('citizen'), getMyReports);
-router.delete('/:id', authenticate, requireRole('citizen', 'agency_admin', 'super_admin', 'agency', 'admin'), remove);
 
-// Agency routes
+// Agency routes (must be before /:id so "agency" is not captured as id)
 router.get('/agency', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), getAgencyReports);
-router.put('/:id/status', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), updateStatus);
 router.get('/agency/clusters', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), getClusters);
+
+// Parameterized routes (after literal paths)
+router.get('/:id', authenticate, requireRole('citizen', 'agency', 'agency_admin', 'super_admin', 'admin'), getOne);
+router.put('/:id/status', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), updateStatus);
+router.delete('/:id', authenticate, requireRole('citizen', 'agency_admin', 'super_admin', 'agency', 'admin'), remove);
 
 export default router;

@@ -16,6 +16,7 @@ import Privacy from './pages/Privacy';
 // Citizen pages
 import CitizenDashboard from './pages/citizen/Dashboard';
 import CitizenReports from './pages/citizen/Reports';
+import ReportDetail from './pages/ReportDetail';
 
 // Agency pages
 import AgencyDashboard from './pages/agency/Dashboard';
@@ -74,6 +75,14 @@ function App() {
             }
           />
           <Route
+            path="/citizen/reports/:id"
+            element={
+              <ProtectedRoute allowedRoles={['citizen']}>
+                <ReportDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/citizen/profile"
             element={
               <ProtectedRoute allowedRoles={['citizen']}>
@@ -103,6 +112,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
                 <AgencyReports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agency/reports/:id"
+            element={
+              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
+                <ReportDetail />
               </ProtectedRoute>
             }
           />

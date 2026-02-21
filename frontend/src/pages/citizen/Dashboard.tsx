@@ -179,7 +179,7 @@ export default function CitizenDashboard() {
           </div>
           <div className="space-y-3">
             {recentReports.map((r) => (
-              <Link key={r.id} to="/citizen/reports" className="flex items-center gap-3 p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+              <Link key={r.id} to={`/citizen/reports/${r.id}`} className="flex items-center gap-3 p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                 <ServiceIconBadge serviceCode={r.service_type} size="sm" />
                 <div className="flex-1 min-w-0">
                   <span className="font-medium text-sm block truncate">{getServiceLabelKey(r.service_type) ? t(getServiceLabelKey(r.service_type)!) : r.service_type}</span>
