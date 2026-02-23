@@ -9,6 +9,7 @@ import {
   updateReportStatus,
   getReportClusters,
   getAllReportClusters,
+  getReportsNearby,
   deleteReport,
 } from '../services/reportService';
 import { logError } from '../utils/logger';
@@ -92,7 +93,11 @@ export const getAgencyReports = async (req: AuthRequest, res: Response): Promise
 
 export const updateStatus = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.userAgencyId) {
+    if (!req.userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!req.userAgencyId && req.userRole !== 'super_admin') {
       res.status(403).json({ error: 'Agency access required' });
       return;
     }
@@ -100,7 +105,10 @@ export const updateStatus = async (req: AuthRequest, res: Response): Promise<voi
     const report = await updateReportStatus({
       reportId: req.params.id,
       status: req.body.status,
-      agencyId: req.userAgencyId,
+      agencyId: req.userAgencyId!,
+      updatedByUserId: req.userId,
+      updatedByRole: req.userRole || 'agency',
+      comment: req.body.comment,
     });
 
     res.status(200).json(report);
@@ -141,6 +149,28 @@ export const getClusters = async (req: AuthRequest, res: Response): Promise<void
       ? await getAllReportClusters()
       : await getReportClusters(req.userAgencyId!);
     res.status(200).json(clusters);
+  } catch (error: any) {
+    logError(req, error.message, error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getNearby = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const lat = parseFloat(String(req.query.lat));
+    const lng = parseFloat(String(req.query.lng));
+    const maxKm = Math.min(parseFloat(String(req.query.maxKm)) || 10, 100);
+    if (Number.isNaN(lat) || Number.isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      res.status(400).json({ error: 'Valid lat and lng required' });
+      return;
+    }
+    const agencyCode = req.userAgencyId ? req.userAgencyCode ?? undefined : undefined;
+    const reports = await getReportsNearby(lng, lat, maxKm, { agencyCode, limit: 30 });
+    res.status(200).json(reports);
   } catch (error: any) {
     logError(req, error.message, error);
     res.status(500).json({ error: error.message });

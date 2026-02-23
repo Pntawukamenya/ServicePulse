@@ -12,10 +12,14 @@ interface ReportData {
   sector?: string | null;
   cell?: string | null;
   description: string;
-  status: 'received' | 'in_progress' | 'resolved';
+  status: 'received' | 'submitted' | 'under_review' | 'assigned' | 'in_progress' | 'resolved' | 'rejected';
   created_at: string;
   updated_at?: string;
   priority_level?: 'high' | 'medium' | 'low';
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  status_history?: Array<{ status: string; timestamp: string; updated_by?: string; updated_by_role?: string; comment?: string }>;
+  allowed_next_statuses?: string[];
+  resolved_at?: string | null;
   users?: {
     full_name: string | null;
     phone_number?: string | null;
@@ -47,7 +51,7 @@ function ReportDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const updateStatus = async (newStatus: 'in_progress' | 'resolved') => {
+  const updateStatus = async (newStatus: string) => {
     if (!id || !report) return;
     setUpdating(true);
     try {
@@ -90,8 +94,12 @@ function ReportDetailPage() {
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
       received: t('agency.received'),
+      submitted: t('agency.received'),
+      under_review: 'Under Review',
+      assigned: 'Assigned',
       in_progress: t('agency.inProgress'),
       resolved: t('agency.resolved'),
+      rejected: 'Rejected',
     };
     return map[status] || status;
   };
@@ -99,10 +107,15 @@ function ReportDetailPage() {
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'resolved': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200';
+      case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200';
       case 'in_progress': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200';
+      case 'under_review':
+      case 'assigned': return 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200';
       default: return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
     }
   };
+
+  const allowedNext = report?.allowed_next_statuses?.length ? report.allowed_next_statuses : (report?.status === 'resolved' || report?.status === 'rejected' ? [] : ['in_progress', 'resolved']);
 
   if (loading) {
     return (
@@ -167,16 +180,16 @@ function ReportDetailPage() {
               </div>
               {isAgency && (
                 <div className="flex flex-wrap gap-2">
-                  {report.status !== 'in_progress' && report.status !== 'resolved' && (
-                    <button onClick={() => updateStatus('in_progress')} disabled={updating} className="btn btn-outline text-sm">
-                      {t('agency.markInProgress')}
+                  {allowedNext.map((nextStatus) => (
+                    <button
+                      key={nextStatus}
+                      onClick={() => updateStatus(nextStatus)}
+                      disabled={updating}
+                      className={nextStatus === 'resolved' ? 'btn btn-primary text-sm' : 'btn btn-outline text-sm'}
+                    >
+                      {nextStatus === 'resolved' ? t('agency.markResolved') : nextStatus === 'rejected' ? 'Reject' : getStatusLabel(nextStatus)}
                     </button>
-                  )}
-                  {report.status !== 'resolved' && (
-                    <button onClick={() => updateStatus('resolved')} disabled={updating} className="btn btn-primary text-sm">
-                      {t('agency.markResolved')}
-                    </button>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
@@ -228,24 +241,40 @@ function ReportDetailPage() {
                 </div>
               </div>
 
-              {/* Timeline */}
+              {/* Timeline: status history or created/updated */}
               <div className="px-6 py-4 border-b border-neutral-100 dark:border-neutral-800">
                 <p className="text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">Timeline</p>
                 <div className="space-y-3">
-                  <div>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('common.submitted')}</p>
-                    <p className="text-sm font-medium text-neutral-900 dark:text-white mt-0.5 whitespace-nowrap">
-                      {formatDateCompact(report.created_at)}
-                    </p>
-                  </div>
-                  {report.updated_at && report.updated_at !== report.created_at && (
-                    <div>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('common.updated')}</p>
-                      <p className="text-sm font-medium text-neutral-900 dark:text-white mt-0.5 whitespace-nowrap">
-                        {formatDateCompact(report.updated_at)}
-                      </p>
-                    </div>
-                  )}
+                  {report.status_history && report.status_history.length > 0
+                    ? [...report.status_history]
+                        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                        .map((entry, i) => (
+                          <div key={i}>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">{getStatusLabel(entry.status)}</p>
+                            <p className="text-sm font-medium text-neutral-900 dark:text-white mt-0.5 whitespace-nowrap">
+                              {formatDateCompact(entry.timestamp)}
+                            </p>
+                            {entry.comment && <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">{entry.comment}</p>}
+                          </div>
+                        ))
+                    : (
+                      <>
+                        <div>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('common.submitted')}</p>
+                          <p className="text-sm font-medium text-neutral-900 dark:text-white mt-0.5 whitespace-nowrap">
+                            {formatDateCompact(report.created_at)}
+                          </p>
+                        </div>
+                        {report.updated_at && report.updated_at !== report.created_at && (
+                          <div>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('common.updated')}</p>
+                            <p className="text-sm font-medium text-neutral-900 dark:text-white mt-0.5 whitespace-nowrap">
+                              {formatDateCompact(report.updated_at)}
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    )}
                 </div>
               </div>
 

@@ -42,8 +42,12 @@ const SERVICE_URGENCY_WEIGHT: Record<string, number> = {
 /** Status priority: unresolved first so admins tackle pending work. */
 const STATUS_WEIGHT: Record<string, number> = {
   received: 30,
+  submitted: 30,
+  under_review: 28,
+  assigned: 25,
   in_progress: 20,
   resolved: 0,
+  rejected: 0,
 };
 
 /** Keywords in description that indicate higher urgency (case-insensitive). */

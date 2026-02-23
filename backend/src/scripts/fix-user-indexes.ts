@@ -12,9 +12,10 @@ if (!MONGODB_URI || MONGODB_URI === 'your_mongodb_connection_string') {
   console.error('Set MONGODB_URI in .env');
   process.exit(1);
 }
+const URI = MONGODB_URI;
 
 async function main() {
-  await mongoose.connect(MONGODB_URI);
+  await mongoose.connect(URI);
   const coll = User.collection;
   await User.createCollection().catch(() => {});
 
@@ -30,12 +31,18 @@ async function main() {
   };
 
   await dropByKey('phone_number');
-  await coll.createIndex({ phone_number: 1 }, { unique: true, sparse: true, name: 'phone_number_1' });
-  console.log('Created sparse unique index: phone_number_1');
+  await coll.createIndex(
+    { phone_number: 1 },
+    { unique: true, name: 'phone_number_1', partialFilterExpression: { phone_number: { $type: 'string' } } }
+  );
+  console.log('Created unique partial index: phone_number_1');
 
   await dropByKey('email');
-  await coll.createIndex({ email: 1 }, { unique: true, sparse: true, name: 'email_1' });
-  console.log('Created sparse unique index: email_1');
+  await coll.createIndex(
+    { email: 1 },
+    { unique: true, name: 'email_1', partialFilterExpression: { email: { $type: 'string' } } }
+  );
+  console.log('Created unique partial index: email_1');
 
   await mongoose.disconnect();
   console.log('Done. You can now register with email only or phone only.');

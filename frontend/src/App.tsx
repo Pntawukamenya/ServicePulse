@@ -29,6 +29,8 @@ const Register = lazy(() => import('./pages/Register'));
 const CitizenReport = lazy(() => import('./pages/citizen/Report'));
 const CitizenProfile = lazy(() => import('./pages/citizen/Profile'));
 const AgencyAlerts = lazy(() => import('./pages/agency/Alerts'));
+const AgencyAnalytics = lazy(() => import('./pages/agency/Analytics'));
+const NotificationsPage = lazy(() => import('./pages/Notifications'));
 
 function App() {
   const { theme, setTheme } = useThemeStore();
@@ -93,6 +95,15 @@ function App() {
           />
 
           <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRoles={['citizen', 'agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
+                <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/agency/dashboard"
             element={
               <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
@@ -137,6 +148,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['agency_admin', 'super_admin']}>
                 <AgencyApprovals />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agency/analytics"
+            element={
+              <ProtectedRoute allowedRoles={['agency', 'agency_employee', 'agency_admin', 'admin', 'super_admin']}>
+                <AgencyAnalytics />
               </ProtectedRoute>
             }
           />

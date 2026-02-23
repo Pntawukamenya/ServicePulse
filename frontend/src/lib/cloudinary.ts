@@ -5,7 +5,17 @@ export function isCloudinaryConfigured(): boolean {
   return !!(CLOUDINARY_CLOUD_NAME && CLOUDINARY_UPLOAD_PRESET);
 }
 
+export interface CloudinaryUploadResult {
+  url: string;
+  public_id?: string;
+}
+
 export async function uploadToCloudinary(file: File): Promise<string> {
+  const result = await uploadToCloudinaryWithMeta(file);
+  return result.url;
+}
+
+export async function uploadToCloudinaryWithMeta(file: File): Promise<CloudinaryUploadResult> {
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
     throw new Error('Cloudinary is not configured. Add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET to your .env file.');
   }
@@ -28,5 +38,5 @@ export async function uploadToCloudinary(file: File): Promise<string> {
   }
 
   const data = await response.json();
-  return data.secure_url;
+  return { url: data.secure_url, public_id: data.public_id };
 }

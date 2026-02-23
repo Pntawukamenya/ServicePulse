@@ -6,9 +6,11 @@
     "dashboard": "Tableau de bord",
     "submitReport": "Soumettre un rapport",
     "myReports": "Mes rapports",
+    "notifications": "Notifications",
     "alerts": "Alertes",
     "reports": "Rapports",
     "approvals": "Approbations",
+    "analytics": "Analyses",
     "logout": "Déconnexion",
     "profile": "Profil",
     "roleCitizen": "Citoyen",
@@ -245,6 +247,17 @@
     "submitting": "Envoi...",
     "placeholderLocation": "ex., Kigali, Nyarugenge",
     "placeholderDescription": "Décrivez le problème de service en détail...",
+    "priority": "Priorité",
+    "priorityOptional": "Optionnel",
+    "priorityLow": "Basse",
+    "priorityMedium": "Moyenne",
+    "priorityHigh": "Haute",
+    "priorityCritical": "Critique",
+    "address": "Adresse (optionnel)",
+    "useMyLocation": "Utiliser ma position",
+    "attachments": "Photos (optionnel)",
+    "attachmentsHint": "Jusqu'à 5 photos. 5 Mo max chacune.",
+    "addPhoto": "Ajouter une photo",
     "phoneRequired": "Le numéro de téléphone est requis"
   },
   "agency": {
@@ -337,6 +350,12 @@
       "disaster": "Catastrophe (Inondation, Glissement)",
       "rib": "Rapport RIB"
     }
+  },
+  "notifications": {
+    "markAllRead": "Tout marquer comme lu",
+    "markRead": "Marquer comme lu",
+    "empty": "Aucune notification.",
+    "viewReport": "Voir le rapport"
   },
   "common": {
     "required": "est requis",

@@ -33,19 +33,31 @@ async function ensureSparseUniqueIndexes() {
   const coll = User.collection;
   await User.createCollection().catch(() => {});
 
+  // Sync schema-defined indexes first (agency_code, role). This also drops any indexes
+  // not in the schema (e.g. old email_1/phone_number_1 if they were ever in the schema).
+  await User.syncIndexes().catch(() => {});
+
+  // Drop email/phone indexes by name in case they still exist (e.g. created by a previous run
+  // or by another process). List indexes so we drop by exact name.
+  const indexes = await coll.indexes().catch(() => [] as { name: string; key?: Record<string, number> }[]);
+  for (const idx of indexes) {
+    if (idx.name && idx.key && ('phone_number' in idx.key || 'email' in idx.key)) {
+      await coll.dropIndex(idx.name).catch(() => {});
+    }
+  }
   await coll.dropIndex('phone_number_1').catch(() => {});
   await coll.dropIndex('email_1').catch(() => {});
 
+  // Create sparse unique indexes so multiple users can have null email or null phone.
+  // Use partialFilterExpression so only non-null values are indexed (avoids E11000 on null).
   await coll.createIndex(
     { phone_number: 1 },
-    { unique: true, sparse: true, name: 'phone_number_1' }
+    { unique: true, name: 'phone_number_1', partialFilterExpression: { phone_number: { $type: 'string' } } }
   );
   await coll.createIndex(
     { email: 1 },
-    { unique: true, sparse: true, name: 'email_1' }
+    { unique: true, name: 'email_1', partialFilterExpression: { email: { $type: 'string' } } }
   );
-
-  await User.syncIndexes().catch(() => {});
 }
 
 async function startServer() {

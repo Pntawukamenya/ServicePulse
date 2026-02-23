@@ -6,9 +6,11 @@
     "dashboard": "Amakuru",
     "submitReport": "Ohereza raporo",
     "myReports": "Raporo zanjye",
+    "notifications": "Amatangazo",
     "alerts": "Amamenyesha",
     "reports": "Ama Raporo",
     "approvals": "Kwemera",
+    "analytics": "Ibisubizo",
     "logout": "Sohoka",
     "profile": "Umwirondoro",
     "roleCitizen": "Umuturage",
@@ -245,6 +247,17 @@
     "submitting": "Irakohereza...",
     "placeholderLocation": "urugero, Kigali, Nyarugenge",
     "placeholderDescription": "Sobanura ikibazo cya serivisi mu buryo burambuye...",
+    "priority": "Icyo ufite",
+    "priorityOptional": "Birabujijwe",
+    "priorityLow": "Ntoya",
+    "priorityMedium": "Buringaniye",
+    "priorityHigh": "Icyiza",
+    "priorityCritical": "Icyane",
+    "address": "Aderesi (birabujijwe)",
+    "useMyLocation": "Gukoresha aho ndi",
+    "attachments": "Amashusho (birabujijwe)",
+    "attachmentsHint": "Kugeza kuri 5. 5 Mo max buri kimwe.",
+    "addPhoto": "Ongeramo ishusho",
     "phoneRequired": "Nimero ya telefoni birakenerwa"
   },
   "agency": {
@@ -337,6 +350,12 @@
       "disaster": "Ingorane (Ihefu, ubushohe)",
       "rib": "Raporo RIB"
     }
+  },
+  "notifications": {
+    "markAllRead": "Turabe byose nk'bisomwe",
+    "markRead": "Turabe nk'bisomwe",
+    "empty": "Nta matangazo.",
+    "viewReport": "Reba raporo"
   },
   "common": {
     "required": "birakenerwa",

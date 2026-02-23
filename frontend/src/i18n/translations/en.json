@@ -6,9 +6,11 @@
     "dashboard": "Dashboard",
     "submitReport": "Submit Report",
     "myReports": "My Reports",
+    "notifications": "Notifications",
     "alerts": "Alerts",
     "reports": "Reports",
     "approvals": "Approvals",
+    "analytics": "Analytics",
     "logout": "Logout",
     "profile": "Profile",
     "roleCitizen": "Citizen",
@@ -247,6 +249,17 @@
     "submitting": "Submitting...",
     "placeholderLocation": "e.g., Kigali, Nyarugenge",
     "placeholderDescription": "Describe the service issue in detail...",
+    "priority": "Priority",
+    "priorityOptional": "Optional",
+    "priorityLow": "Low",
+    "priorityMedium": "Medium",
+    "priorityHigh": "High",
+    "priorityCritical": "Critical",
+    "address": "Street address (optional)",
+    "useMyLocation": "Use my location",
+    "attachments": "Photos (optional)",
+    "attachmentsHint": "Add up to 5 photos. Max 5MB each.",
+    "addPhoto": "Add photo",
     "phoneRequired": "Phone number is required"
   },
   "agency": {
@@ -339,6 +352,12 @@
       "disaster": "Disaster (Flood, Landslide)",
       "rib": "RIB Report (Fraud, Investigation)"
     }
+  },
+  "notifications": {
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "empty": "No notifications yet.",
+    "viewReport": "View report"
   },
   "common": {
     "required": "is required",

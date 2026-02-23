@@ -25,6 +25,44 @@ export default function Layout({ children }: LayoutProps) {
 
   const isCitizenDashboard = location.pathname.startsWith('/citizen/');
   const isAgencyDashboard = location.pathname.startsWith('/agency/');
+  const isNotificationsPage = location.pathname === '/notifications';
+
+  if (isNotificationsPage && isAuthenticated()) {
+    if (isCitizen()) {
+      return (
+        <DashboardLayout
+          roleLabel={t('nav.roleCitizen')}
+          navItems={[
+            { to: '/citizen/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
+            { to: '/citizen/report', label: t('nav.submitReport'), icon: <DASHBOARD_ICONS.ReportIcon /> },
+            { to: '/citizen/reports', label: t('nav.myReports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
+            { to: '/notifications', label: t('nav.notifications'), icon: <DASHBOARD_ICONS.AlertIcon /> },
+            { to: '/citizen/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
+          ]}
+        >
+          {children}
+        </DashboardLayout>
+      );
+    }
+    if (isAgency() || isAdmin()) {
+      const agencyNavItems = [
+        { to: '/agency/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
+        { to: '/agency/alerts', label: t('nav.alerts'), icon: <DASHBOARD_ICONS.AlertIcon /> },
+        { to: '/agency/reports', label: t('nav.reports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
+        ...(user?.role === 'agency_admin' || user?.role === 'super_admin'
+          ? [{ to: '/agency/approvals', label: t('nav.approvals'), icon: <DASHBOARD_ICONS.ApprovalsIcon /> }]
+          : []),
+        { to: '/agency/analytics', label: t('nav.analytics'), icon: <DASHBOARD_ICONS.ChartIcon /> },
+        { to: '/notifications', label: t('nav.notifications'), icon: <DASHBOARD_ICONS.AlertIcon /> },
+        { to: '/agency/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
+      ];
+      return (
+        <DashboardLayout roleLabel={t('nav.roleAgency')} navItems={agencyNavItems}>
+          {children}
+        </DashboardLayout>
+      );
+    }
+  }
 
   if (isCitizenDashboard && isCitizen()) {
     return (
@@ -34,6 +72,7 @@ export default function Layout({ children }: LayoutProps) {
           { to: '/citizen/dashboard', label: t('nav.dashboard'), icon: <DASHBOARD_ICONS.DashboardIcon /> },
           { to: '/citizen/report', label: t('nav.submitReport'), icon: <DASHBOARD_ICONS.ReportIcon /> },
           { to: '/citizen/reports', label: t('nav.myReports'), icon: <DASHBOARD_ICONS.ReportsIcon /> },
+          { to: '/notifications', label: t('nav.notifications'), icon: <DASHBOARD_ICONS.AlertIcon /> },
           { to: '/citizen/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
         ]}
       >
@@ -50,6 +89,8 @@ export default function Layout({ children }: LayoutProps) {
       ...(user?.role === 'agency_admin' || user?.role === 'super_admin'
         ? [{ to: '/agency/approvals', label: t('nav.approvals'), icon: <DASHBOARD_ICONS.ApprovalsIcon /> }]
         : []),
+      { to: '/agency/analytics', label: t('nav.analytics'), icon: <DASHBOARD_ICONS.ChartIcon /> },
+      { to: '/notifications', label: t('nav.notifications'), icon: <DASHBOARD_ICONS.AlertIcon /> },
       { to: '/agency/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
     ];
     return (
@@ -84,6 +125,9 @@ export default function Layout({ children }: LayoutProps) {
                       <Link to="/citizen/reports" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.myReports')}
                       </Link>
+                      <Link to="/notifications" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
+                        {t('nav.notifications')}
+                      </Link>
                     </>
                   )}
                   {isAgency() && (
@@ -102,6 +146,12 @@ export default function Layout({ children }: LayoutProps) {
                           {t('nav.approvals')}
                         </Link>
                       )}
+                      <Link to="/agency/analytics" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
+                        {t('nav.analytics')}
+                      </Link>
+                      <Link to="/notifications" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
+                        {t('nav.notifications')}
+                      </Link>
                       <Link to="/agency/profile" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.profile')}
                       </Link>
@@ -182,40 +232,49 @@ export default function Layout({ children }: LayoutProps) {
           {mobileMenuOpen && isAuthenticated() && (
             <div className="md:hidden py-4 border-t border-neutral-200 dark:border-neutral-800 animate-fade-in">
               <div className="flex flex-col gap-1">
-                {isCitizen() && (
-                  <>
-                    <Link to="/citizen/dashboard" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                      {t('nav.dashboard')}
-                    </Link>
-                    <Link to="/citizen/report" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                      {t('nav.submitReport')}
-                    </Link>
-                    <Link to="/citizen/reports" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                      {t('nav.myReports')}
-                    </Link>
-                  </>
-                )}
-                {isAgency() && (
-                  <>
-                    <Link to="/agency/dashboard" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                      {t('nav.dashboard')}
-                    </Link>
-                    <Link to="/agency/alerts" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                      {t('nav.alerts')}
-                    </Link>
-                    <Link to="/agency/reports" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                      {t('nav.reports')}
-                    </Link>
-                    {(user?.role === 'agency_admin' || user?.role === 'super_admin') && (
-                      <Link to="/agency/approvals" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                        {t('nav.approvals')}
+{isCitizen() && (
+                    <>
+                      <Link to="/citizen/dashboard" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.dashboard')}
                       </Link>
-                    )}
-                    <Link to="/agency/profile" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
-                      {t('nav.profile')}
-                    </Link>
-                  </>
-                )}
+                      <Link to="/citizen/report" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.submitReport')}
+                      </Link>
+                      <Link to="/citizen/reports" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.myReports')}
+                      </Link>
+                      <Link to="/notifications" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.notifications')}
+                      </Link>
+                    </>
+                  )}
+{isAgency() && (
+                    <>
+                      <Link to="/agency/dashboard" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.dashboard')}
+                      </Link>
+                      <Link to="/agency/alerts" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.alerts')}
+                      </Link>
+                      <Link to="/agency/reports" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.reports')}
+                      </Link>
+                      {(user?.role === 'agency_admin' || user?.role === 'super_admin') && (
+                        <Link to="/agency/approvals" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                          {t('nav.approvals')}
+                        </Link>
+                      )}
+                      <Link to="/agency/analytics" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.analytics')}
+                      </Link>
+                      <Link to="/notifications" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.notifications')}
+                      </Link>
+                      <Link to="/agency/profile" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                        {t('nav.profile')}
+                      </Link>
+                    </>
+                  )}
                 <Link to="/" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
                   {t('nav.home')}
                 </Link>
