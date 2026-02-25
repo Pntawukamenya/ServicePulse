@@ -1,222 +1,351 @@
 # ServicePulse
 
-A platform for public service communication and citizen reporting in Rwanda. We combine SMS alerts (for citizens without reliable internet) with web dashboards so agencies and citizens stay connected.
+**A platform for public service communication and citizen reporting in Rwanda.** ServicePulse combines SMS alerts (for citizens without reliable internet) with web dashboards so government agencies and citizens stay connected.
 
-If you're reading this, you're probably setting it up, contributing, or grading it. Here’s what you need to know.
+---
 
-### Figma UI Design: [Click Here](https://www.figma.com/design/WEQG4skoJu6RYiSC52fGiw/ServicePulse?node-id=0-1&t=VzV5uPCiElCJPwD2-1)
-### Video Presentation: [Click Here](https://drive.google.com/file/d/1kLV9zweZ76mL2QHhrhuKBdGxiLhVNbLL/view?usp=sharing)
+## Table of Contents
 
+- [Project overview](#project-overview)
+- [Design & presentation](#design--presentation)
+- [Features](#features)
+- [Technology stack](#technology-stack)
+- [Project structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Getting started (local development)](#getting-started-local-development)
+- [Environment variables](#environment-variables)
+- [Database schema](#database-schema)
+- [API reference](#api-reference)
+- [Deployment](#deployment)
+- [Roles & access](#roles--access)
+- [Security](#security)
+- [For evaluators / supervisors](#for-evaluators--supervisors)
+- [License](#license)
 
+---
 
-## What You Get
+## Project overview
+
+ServicePulse is a full-stack capstone project that enables:
+
+- **Citizens** to submit and track service disruption reports (e.g. REG, WASAC, Emergency) and receive SMS alerts.
+- **Agencies** (REG, WASAC, Emergency Services) to manage reports, send targeted SMS alerts, and view analytics.
+- **Everyone** to use a responsive web app with light/dark theme and multi-language support (English, Kinyarwanda, French).
+
+The codebase is a monorepo: **frontend** (React + Vite) and **backend** (Node.js + Express) in one repository, with clear separation for setup, deployment, and grading.
+
+---
+
+## Design & presentation
+
+| Resource | Link |
+|----------|------|
+| **Figma UI design** | [Open in Figma](https://www.figma.com/design/WEQG4skoJu6RYiSC52fGiw/ServicePulse?node-id=0-1&t=VzV5uPCiElCJPwD2-1) |
+| **Video presentation** | [Watch on Google Drive](https://drive.google.com/file/d/1kLV9zweZ76mL2QHhrhuKBdGxiLhVNbLL/view?usp=sharing) |
+
+---
+
+## Features
 
 ### Citizens
-- SMS alerts for service disruptions in their area
-- Submit and track reports (REG, WASAC, Emergency)
-- Manage profile and notification preferences
+
+- Register and log in (email or phone).
+- Submit reports with service type, location (sector/cell), description, and optional attachments (e.g. Cloudinary).
+- View and track their own reports and status (e.g. Received → In Progress → Resolved).
+- Manage profile and notification preferences.
+- Receive SMS alerts for service disruptions (when Twilio is configured).
 
 ### Agencies (REG, WASAC, Emergency Services)
-- Create and send targeted SMS alerts
-- View and manage citizen reports
-- Update status (Received → In Progress → Resolved)
-- See service hotspots and basic analytics
+
+- Create and send targeted SMS alerts to citizens.
+- View and filter reports assigned to their agency.
+- Update report status (e.g. Under Review, In Progress, Resolved, Rejected).
+- View report clusters/hotspots on a map.
+- Access analytics: resolution rate, resolution time, priority distribution, monthly trends, reports by category.
+- Approvals workflow for content (if enabled).
 
 ### Everyone
-- Light/dark theme, multi-language (EN, Kin, Fre), responsive layout
 
-## Technology Stack
+- **Light/dark theme** — toggle with persistence.
+- **Multi-language** — English, Kinyarwanda (Kin), French (Fre) with persisted preference.
+- **Responsive layout** — usable on desktop, tablet, and mobile.
 
-### Frontend
-- **React 18** with TypeScript
-- **Vite** for build tooling
-- **Tailwind CSS** for styling
-- **React Router** for navigation
-- **Zustand** for state management
-- **Axios** for API communication
-- **React Hook Form** for form handling
+---
 
-### Backend
-- **Node.js** with Express
-- **TypeScript** for type safety
-- **MongoDB** with Mongoose for database
-- **JWT** for authentication
-- **Twilio** for SMS integration (pilot mode)
-- **bcryptjs** for password hashing
-- **express-validator** for input validation
+## Technology stack
 
-## Project Structure
+| Layer | Technologies |
+|-------|--------------|
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS, React Router, Zustand, Axios, React Hook Form |
+| **Backend** | Node.js, Express, TypeScript, MongoDB (Mongoose), JWT, bcryptjs, express-validator |
+| **Optional** | Twilio (SMS), Nodemailer (SMTP for password reset), Cloudinary (frontend uploads) |
+
+---
+
+## Project structure
 
 ```
 ServicePulse/
-├── backend/
+├── backend/                 # Node.js + Express API
 │   ├── src/
-│   │   ├── config/          # Database, SMS configuration
-│   │   ├── controllers/      # Request handlers
-│   │   ├── middleware/      # Auth, validation, error handling
-│   │   ├── routes/          # API routes
-│   │   ├── services/        # Business logic
-│   │   ├── utils/           # JWT utilities
-│   │   ├── scripts/         # Seed script
-│   │   └── server.ts        # Express server entry point
+│   │   ├── config/         # Database, SMS, email, USSD config
+│   │   ├── controllers/    # Request handlers (auth, reports, notifications, analytics, etc.)
+│   │   ├── middleware/    # Auth, validation, error handling
+│   │   ├── models/        # Mongoose models (User, Report, Agency, Notification, etc.)
+│   │   ├── routes/        # API route definitions
+│   │   ├── services/      # Business logic
+│   │   ├── utils/        # JWT, logger
+│   │   ├── scripts/      # Seed, migrations
+│   │   └── server.ts     # Entry point
+│   ├── .env.example      # Example environment variables
 │   └── package.json
-├── frontend/
+├── frontend/              # React SPA
 │   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   ├── pages/          # Page components
-│   │   │   ├── citizen/    # Citizen dashboard pages
-│   │   │   └── agency/     # Agency dashboard pages
-│   │   ├── lib/            # API client
-│   │   ├── store/          # Zustand stores
-│   │   └── App.tsx         # Main app component
+│   │   ├── components/   # Reusable UI components
+│   │   ├── pages/        # Route pages (citizen/, agency/, shared)
+│   │   ├── lib/          # API client, Cloudinary
+│   │   ├── store/        # Zustand (auth, theme, language)
+│   │   ├── i18n/         # Translations (en, rw, fr)
+│   │   ├── config/       # Services, app config
+│   │   └── App.tsx
 │   └── package.json
 └── README.md
 ```
 
-## Getting Started
+---
 
-You'll need Node.js 18+, MongoDB (local or Atlas), and optionally Twilio for SMS (pilot mode works without it).
+## Prerequisites
 
-### Backend
+- **Node.js** 18 or later
+- **MongoDB** — local (`mongodb://localhost:27017`) or [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- **Optional:** [Twilio](https://www.twilio.com) account for SMS; [Cloudinary](https://cloudinary.com) for image uploads; SMTP for password-reset emails
 
-1. Go to the backend:
+---
+
+## Getting started (local development)
+
+### 1. Clone and open the repo
+
 ```bash
-cd backend
+git clone <repository-url>
+cd ServicePulse
 ```
 
-2. Install dependencies:
+### 2. Backend setup
+
 ```bash
+cd backend
 npm install
 ```
 
-3. Create a `.env` file (copy from `backend/.env.example`). **Required for backend:**
+Create a `.env` file in the `backend` folder (see [Environment variables](#environment-variables)). Minimum for local run:
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `MONGODB_URI` | MongoDB connection string (required) | `mongodb://localhost:27017/servicepulse` or `mongodb+srv://user:pass@cluster.mongodb.net/servicepulse` |
-| `JWT_SECRET` | Secret for signing JWTs (required) | Any long random string |
-| `JWT_EXPIRES_IN` | Token expiry | `7d` |
-| `TWILIO_ACCOUNT_SID` | Twilio SID (optional, SMS) | From twilio.com |
-| `TWILIO_AUTH_TOKEN` | Twilio token (optional) | From twilio.com |
-| `TWILIO_PHONE_NUMBER` | Twilio number (optional) | e.g. `+1234567890` |
-| `FRONTEND_URL` | CORS origin | `http://localhost:3000` |
+- `MONGODB_URI` — e.g. `mongodb://localhost:27017/servicepulse` or your Atlas URI  
+- `JWT_SECRET` — any long random string  
+- `FRONTEND_URL` — `http://localhost:3000`
 
-4. Seed the database (creates REG, WASAC, Emergency agencies):
+Seed the database (creates REG, WASAC, Emergency agencies):
+
 ```bash
 npm run seed
 ```
 
-5. Start the development server:
+Start the backend:
+
 ```bash
 npm run dev
 ```
 
-Backend runs at `http://localhost:5000`.
+Backend runs at **http://localhost:5000**. Health check: http://localhost:5000/health
 
-### Frontend
+### 3. Frontend setup
 
-1. Go to the frontend:
+Open a new terminal:
+
 ```bash
 cd frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
 ```
 
-3. Create a `.env` file:
-```bash
-VITE_API_URL=http://localhost:5000/api
+Create a `.env` file in the `frontend` folder:
 
-# Cloudinary (profile picture uploads) - get from cloudinary.com
-VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
-VITE_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
-```
-Create an unsigned upload preset in Cloudinary: Settings → Upload → Add upload preset → set "Signing Mode" to "Unsigned".
+- `VITE_API_URL=http://localhost:5000/api`
+- Optional: `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` for profile/upload features
 
-4. Start the development server:
+Start the frontend:
+
 ```bash
 npm run dev
 ```
 
-Frontend runs at `http://localhost:3000`.
+Frontend runs at **http://localhost:3000**. Use the app to register (citizen or agency), log in, and test reports and alerts.
 
-## Database Schema (MongoDB)
+---
 
-Collections:
-- **users**: User accounts with role-based access (citizen, agency_employee, agency_admin, admin)
-- **agencies**: Government service agencies (REG, WASAC, Emergency) – seed with `npm run seed`
-- **reports**: Citizen-submitted service disruption reports
-- **notifications**: SMS alerts sent by agencies
-- **otpverifications**: OTP codes for citizen registration
+## Environment variables
 
-## API Endpoints
+### Backend (`backend/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MONGODB_URI` | Yes | MongoDB connection string (e.g. `mongodb://localhost:27017/servicepulse` or Atlas `mongodb+srv://...`) |
+| `JWT_SECRET` | Yes | Secret for signing JWTs (use a long random string) |
+| `FRONTEND_URL` | Yes (for CORS) | Frontend origin (e.g. `http://localhost:3000` or `https://your-app.vercel.app`) |
+| `JWT_EXPIRES_IN` | No | Token expiry (default: `7d`) |
+| `PORT` | No | Server port (default: `5000`; Render sets this automatically) |
+| `TWILIO_ACCOUNT_SID` | No | Twilio SID (SMS) |
+| `TWILIO_AUTH_TOKEN` | No | Twilio auth token |
+| `TWILIO_PHONE_NUMBER` | No | Twilio phone number |
+| `SMTP_*` | No | SMTP settings for password-reset emails |
+
+See `backend/.env.example` for a full template.
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_API_URL` | Yes | Backend API base URL (e.g. `http://localhost:5000/api`) |
+| `VITE_CLOUDINARY_CLOUD_NAME` | No | Cloudinary cloud name for uploads |
+| `VITE_CLOUDINARY_UPLOAD_PRESET` | No | Cloudinary unsigned upload preset |
+
+---
+
+## Database schema
+
+MongoDB collections used by the backend:
+
+| Collection | Purpose |
+|------------|---------|
+| `users` | User accounts; roles: citizen, agency_employee, agency_admin, admin; linked to agency via `agency_id` for agency users |
+| `agencies` | Service agencies (REG, WASAC, Emergency); created by `npm run seed` |
+| `reports` | Citizen-submitted reports (service type, location, status, priority, timestamps) |
+| `notifications` | SMS alerts created and sent by agencies |
+| `otpverifications` | OTP codes for registration and password reset |
+| Others | Supporting models (e.g. status history, approvals) as needed |
+
+---
+
+## API reference
+
+Base path: `/api`. All protected routes require `Authorization: Bearer <token>`.
 
 ### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-- `POST /api/auth/forgot-password` - Request password reset (sends OTP via email/SMS)
-- `POST /api/auth/reset-password` - Reset password with OTP (identifier, otp, newPassword, confirmNewPassword)
-- `PUT /api/auth/change-password` - Change password (protected: oldPassword, newPassword, confirmNewPassword)
-- `GET /api/auth/profile` - Get user profile (protected)
-- `PUT /api/auth/profile` - Update user profile (protected)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register (citizen or agency user) |
+| POST | `/api/auth/login` | Login; returns JWT |
+| POST | `/api/auth/forgot-password` | Request password reset (OTP via email/SMS) |
+| POST | `/api/auth/reset-password` | Reset password with OTP |
+| PUT | `/api/auth/change-password` | Change password (protected) |
+| GET | `/api/auth/profile` | Get current user profile (protected) |
+| PUT | `/api/auth/profile` | Update profile (protected) |
 
 ### Reports
-- `POST /api/reports` - Create new report (citizen)
-- `GET /api/reports/my-reports` - Get user's reports (citizen)
-- `DELETE /api/reports/:id` - Delete report (citizen: own only; agency: own agency)
-- `GET /api/reports/agency` - Get agency reports (agency)
-- `PUT /api/reports/:id/status` - Update report status (agency)
-- `GET /api/reports/agency/clusters` - Get location clusters (agency)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/reports` | Create report (citizen) |
+| GET | `/api/reports/my-reports` | List current user's reports (citizen) |
+| GET | `/api/reports/agency` | List agency reports (agency) |
+| GET | `/api/reports/:id` | Get single report (citizen: own; agency: agency) |
+| PUT | `/api/reports/:id/status` | Update report status (agency) |
+| DELETE | `/api/reports/:id` | Delete report (citizen: own; agency: agency) |
+| GET | `/api/reports/agency/clusters` | Location clusters for map (agency) |
 
 ### Notifications
-- `POST /api/notifications` - Create and send alert (agency)
-- `GET /api/notifications/agency` - Get agency notifications (agency)
 
-## Deploying
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/notifications` | Create and send SMS alert (agency) |
+| GET | `/api/notifications/agency` | List agency notifications (agency) |
+
+### Analytics & stats
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/analytics/reports` | Report analytics (resolution rate, trends, by category, priority) (agency) |
+| GET | `/api/stats/*` | Stats endpoints as implemented (agency/admin) |
+
+### Other
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check (no auth); returns `{ status: 'ok', timestamp }` |
+
+---
+
+## Deployment
 
 ### Backend (Render)
 
-Connect your repo to Render, create a Web Service, and set:
-- Build: `npm install && npm run build`
-- Start: `npm start`
-- Copy env vars from `.env.example`
+1. **MongoDB** — Create a cluster (e.g. MongoDB Atlas), copy the connection string, and allow access from Render (e.g. allow `0.0.0.0/0` in Atlas network access).
+
+2. **Render** — Log in at [render.com](https://render.com) → **New** → **Web Service** → Connect the ServicePulse repo.
+
+3. **Service settings**
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start`
+   - **Runtime:** Node
+
+4. **Environment variables** (Render → Environment)
+   - `MONGODB_URI` — your MongoDB connection string  
+   - `JWT_SECRET` — long random string (e.g. 32+ characters)  
+   - `FRONTEND_URL` — your frontend URL (e.g. `https://your-app.vercel.app`, no trailing slash)
+
+5. **Deploy** — Create the service. Render sets `PORT` automatically. After deploy, open `https://<your-service>.onrender.com/health` to verify.
+
+6. **Seed (optional)** — Run `npm run seed` once (e.g. via Render Shell or locally with the same `MONGODB_URI`) to create agencies.
 
 ### Frontend (Vercel)
 
-1. Import this repo into Vercel.
-2. Set the **Root Directory** to `frontend`.
-3. Build command: `npm run build`
-4. Output directory: `dist`
-5. Add env var `VITE_API_URL` = your backend URL (e.g. `https://your-app.onrender.com/api`)
+1. Import the repo into [Vercel](https://vercel.com).
+2. **Root Directory:** `frontend`
+3. **Build Command:** `npm run build`
+4. **Output Directory:** `dist`
+5. **Environment variable:** `VITE_API_URL` = backend API base (e.g. `https://<your-backend>.onrender.com/api`)
+6. Deploy. Then set the backend’s `FRONTEND_URL` to the Vercel URL so CORS allows the frontend.
 
-Vercel will auto-detect the Vite app and run the build. Once deployed, point your backend `FRONTEND_URL` to the Vercel URL.
+---
 
-## SMS (Twilio)
+## Roles & access
 
-We use Twilio for SMS. Without credentials, it logs to the console instead of sending. To turn it on: create a Twilio account, grab SID, Auth Token, and phone number, then add them to your backend `.env`.
+| Role | Capabilities |
+|------|--------------|
+| **Citizen** | Register, log in, submit reports, view own reports, manage profile, receive alerts |
+| **Agency** | Everything citizens have for their own data; plus view agency reports, update status, create alerts, analytics. Requires `agency_id` in user record. |
+| **Admin** | Full access (admin-specific features as implemented) |
 
-## Roles
+Agency users must be associated with an agency (REG, WASAC, or Emergency) via `agency_id` in the database; agencies are created by the seed script.
 
-- **Citizen** — Submit reports, view own reports, manage profile
-- **Agency** — Create alerts, view reports, update status. Agency users need `agency_id` set in the DB to match their agency (REG, WASAC, or Emergency)
-- **Admin** — Full access (limited in this phase)
+---
 
 ## Security
 
-JWT auth, bcrypt passwords, express-validator for inputs, CORS, role-based routes, secure sessions.
+- **Authentication:** JWT-based; tokens in `Authorization` header; expiry configurable via `JWT_EXPIRES_IN`.
+- **Passwords:** Hashed with bcrypt.
+- **Input validation:** express-validator on backend; React Hook Form on frontend.
+- **CORS:** Backend allows only `FRONTEND_URL` in production.
+- **Role-based routes:** Middleware restricts endpoints by user role.
 
-## Notes for Contributors
+---
 
-- TypeScript throughout
-- React Hook Form + Zustand on the frontend
-- Tailwind for styling
-- API errors follow a consistent format
+## For evaluators / supervisors
 
-## Roadmap
+This section summarizes what is implemented for grading and demo.
 
-More analytics, automated responses, full Kinyarwanda support, mobile app, and national-scale deployment when we're ready.
+- **Full-stack application:** React frontend (Vite) + Node/Express backend (TypeScript), MongoDB, JWT auth.
+- **User flows:** Registration (citizen/agency), login, profile, password reset (OTP), report creation and tracking, agency report management and status updates.
+- **Features:** Reports (CRUD, status workflow), notifications (SMS alerts via Twilio when configured), analytics dashboard (resolution rate, trends, by category/priority), approvals (if enabled), map/clusters.
+- **UX:** Responsive layout, light/dark theme, i18n (EN, Kinyarwanda, French), Cloudinary uploads for report attachments.
+- **Code quality:** TypeScript on frontend and backend, structured routes/controllers/services, validation and error handling, environment-based config.
+- **Deployment:** Backend deployable to Render (with Root Directory `backend` and env vars); frontend deployable to Vercel (Root Directory `frontend`, `VITE_API_URL` pointing to backend). README documents both.
+- **Design & presentation:** Figma link and video presentation linked at the top of this README.
+
+To run locally: follow [Prerequisites](#prerequisites) and [Getting started (local development)](#getting-started-local-development). To test deployment: use the same env vars as in the README for Render and Vercel.
+
+---
 
 ## License
 
