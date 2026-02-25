@@ -13,11 +13,9 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
   Line,
   ComposedChart,
   Area,
-  AreaChart,
 } from 'recharts';
 
 interface ReportAnalytics {
@@ -203,7 +201,7 @@ export default function AgencyAnalytics() {
                       <Cell key={`cell-${index}`} fill={entry.fill} stroke="transparent" />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [`${value}%`, 'Share']} />
+                  <Tooltip formatter={(value: number | undefined) => [value != null ? `${value}%` : '—', 'Share']} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -252,7 +250,7 @@ export default function AgencyAnalytics() {
                         <Cell key={`cell-${index}`} fill={entry.fill} stroke="transparent" />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => [value, 'Reports']} />
+                    <Tooltip formatter={(value: number | undefined) => [value ?? '—', 'Reports']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

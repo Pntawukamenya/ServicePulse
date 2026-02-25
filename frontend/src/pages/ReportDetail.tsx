@@ -65,19 +65,6 @@ function ReportDetailPage() {
     }
   };
 
-  const formatDate = (d: string | undefined) => {
-    if (!d) return '—';
-    const date = new Date(d);
-    if (Number.isNaN(date.getTime())) return '—';
-    return date.toLocaleDateString(undefined, {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
   const formatDateCompact = (d: string | undefined) => {
     if (!d) return '—';
     const date = new Date(d);
