@@ -4,6 +4,8 @@ import api from '../lib/api';
 import { useTranslation } from '../i18n/useTranslation';
 import { getServiceLabelKey } from '../config/services';
 import { ServiceIconBadge } from '../components/ServiceIcon';
+import { PriorityPill } from '../components/PriorityPill';
+import { useAuthStore } from '../store/authStore';
 
 interface ReportData {
   id: string;
@@ -31,6 +33,7 @@ function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { pathname } = useLocation();
   const { t } = useTranslation();
+  const { user } = useAuthStore();
   const isAgency = pathname.includes('/agency/');
   const backHref = isAgency ? '/agency/reports' : '/citizen/reports';
   const backLabel = isAgency ? t('agency.viewReports') : t('citizen.viewAllReports');
@@ -131,6 +134,8 @@ function ReportDetailPage() {
   }
 
   const serviceLabel = getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : report.service_type;
+  const role = user?.role || '';
+  const isAgencyAdmin = ['agency_admin', 'super_admin', 'admin'].includes(role);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -148,20 +153,17 @@ function ReportDetailPage() {
                   <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-white mt-1 tracking-tight">
                     {serviceLabel}
                   </h1>
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
-                    <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium ${getStatusBadgeClass(report.status)}`}>
-                      {getStatusLabel(report.status)}
-                    </span>
-                    {report.priority_level === 'high' && (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                        Urgent
+                  <div className="flex flex-wrap items-center gap-3 mt-3">
+                    {isAgencyAdmin || !isAgency ? (
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getStatusBadgeClass(report.status)}`}>
+                        {getStatusLabel(report.status)}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                        {t('citizen.pending')}
                       </span>
                     )}
-                    {report.priority_level === 'medium' && (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">
-                        Priority
-                      </span>
-                    )}
+                    <PriorityPill level={report.priority_level} className="text-[11px]" />
                   </div>
                 </div>
               </div>

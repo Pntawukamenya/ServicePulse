@@ -21,7 +21,7 @@ export interface UssdProviderConfig {
 
 export const ussdConfig = {
   // USSD Service Code (e.g., *123#)
-  serviceCode: process.env.USSD_SERVICE_CODE || '*123#',
+  serviceCode: process.env.USSD_SERVICE_CODE || '*304#',
   
   // Session timeout (minutes)
   sessionTimeout: parseInt(process.env.USSD_SESSION_TIMEOUT || '5', 10),

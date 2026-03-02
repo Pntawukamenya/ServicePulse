@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ServiceIconBadge } from './ServiceIcon';
+import { PriorityPill } from './PriorityPill';
 
 type Status = 'received' | 'in_progress' | 'resolved';
 
@@ -65,16 +66,7 @@ export default function ReportCard({
   priority_level,
   to,
 }: ReportCardProps) {
-  const priorityBadge =
-    priority_level === 'high' ? (
-      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" title="High priority">
-        Urgent
-      </span>
-    ) : priority_level === 'medium' ? (
-      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200" title="Medium priority">
-        Priority
-      </span>
-    ) : null;
+  const priorityBadge = <PriorityPill level={priority_level} />;
 
   const LocationIcon = () => (
     <svg className="w-3.5 h-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,8 +132,8 @@ export default function ReportCard({
         <ServiceIconBadge serviceCode={serviceType} />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="min-w-0">
                 <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400">{getReportId(id, reportIdPrefix)}</span>
                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mt-0.5">
                   {displayLabel ?? serviceType}
@@ -149,7 +141,9 @@ export default function ReportCard({
               </div>
               {priorityBadge}
             </div>
-            <span className={`${statusBadge(status)} shrink-0`}>{statusLabel(status)}</span>
+            <span className={`${statusBadge(status)} shrink-0 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium`}>
+              {statusLabel(status)}
+            </span>
           </div>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2 flex items-center gap-1.5">
             <LocationIcon />

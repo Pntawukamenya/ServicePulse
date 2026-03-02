@@ -1,5 +1,5 @@
 import UssdSession, { UssdSessionState } from '../models/UssdSession';
-import { registerUserUssd, signInUssd } from './authService';
+import { registerUserUssd } from './authService';
 import { getUssdTranslation, getUssdLanguageFromCode, UssdLanguage } from '../i18n/ussdTranslations';
 import { RWANDA_LOCATIONS, getDistrictsForProvince, getSectorsForDistrict, getLocationName } from '../config/rwandaLocations';
 import crypto from 'crypto';
@@ -119,9 +119,6 @@ export async function handleUssdRequest(req: UssdRequest): Promise<UssdResponse>
     case 'SIGNUP_SERVICE_PREFS':
       return await handleSignupServicePrefs(sessionId, lastInput, normalizedPhone, language);
 
-    case 'SIGNIN_START':
-      return await handleSigninStart(sessionId, lastInput, normalizedPhone, language);
-
     default:
       return {
         message: formatUssdMessage(t.sessionExpired),
@@ -179,13 +176,6 @@ async function handleMenuSelection(sessionId: string, input: string, phoneNumber
       await updateSession(sessionId, { state: 'SIGNUP_NAME' });
       return {
         message: formatUssdMessage(`${t.signUp}\n\n${t.enterName}`),
-        shouldEnd: false,
-      };
-
-    case '2':
-      await updateSession(sessionId, { state: 'SIGNIN_START' });
-      return {
-        message: formatUssdMessage(`${t.signIn}\n\n${t.signingIn}`),
         shouldEnd: false,
       };
 
@@ -391,33 +381,52 @@ async function handleSignupServicePrefs(sessionId: string, input: string, phoneN
 
   const { name, district, sector } = session?.data || {};
 
-  // Create account directly (no OTP needed for USSD)
+  // Create or update an offline user profile based on phone number
   try {
-    const result = await registerUserUssd({
-      identifier: phoneNumber,
-      identifierType: 'phone',
-      password: crypto.randomBytes(16).toString('hex'), // Random password for USSD users
-      role: 'citizen',
-      district: district || undefined,
-      sector: sector || undefined,
-      termsAccepted: true,
-      fullName: name || undefined,
-    });
-
-    // Update user with service preferences if needed (can be stored in user preferences later)
     const User = (await import('../models/User')).default;
-    await User.findByIdAndUpdate(result.user.id, {
-      $set: {
-        full_name: name,
-        sms_opt_in: true,
-      },
-    });
+
+    const existing = await User.findOne({ phone_number: normalizePhoneForUssd(phoneNumber) }).lean();
+
+    if (existing) {
+      await User.updateOne(
+        { _id: existing._id },
+        {
+          $set: {
+            full_name: name || existing.full_name,
+            location:
+              district && sector
+                ? [district.trim(), sector.trim()].filter(Boolean).join(', ')
+                : existing.location,
+            sms_opt_in: true,
+          },
+        }
+      );
+    } else {
+      const result = await registerUserUssd({
+        identifier: phoneNumber,
+        identifierType: 'phone',
+        password: crypto.randomBytes(16).toString('hex'), // Random password for USSD users
+        role: 'citizen',
+        district: district || undefined,
+        sector: sector || undefined,
+        termsAccepted: true,
+        fullName: name || undefined,
+      });
+      await User.findByIdAndUpdate(result.user.id, {
+        $set: {
+          full_name: name,
+          sms_opt_in: true,
+        },
+      });
+    }
 
     await UssdSession.deleteOne({ session_id: sessionId });
 
+    const userName = name || 'User';
+
     return {
       message: formatUssdMessage(
-        `${t.welcome} ${name}!\n\n` +
+        `${t.welcome} ${userName}!\n\n` +
         `${t.accountCreated}\n\n` +
         `${t.thankYou}`
       ),
@@ -426,35 +435,6 @@ async function handleSignupServicePrefs(sessionId: string, input: string, phoneN
   } catch (error: any) {
     return {
       message: formatUssdMessage(`${t.error} ${error.message || t.registrationFailed}`),
-      shouldEnd: true,
-    };
-  }
-}
-
-async function handleSigninStart(sessionId: string, input: string, phoneNumber: string, language: UssdLanguage): Promise<UssdResponse> {
-  const session = await UssdSession.findOne({ session_id: sessionId }).lean();
-  const lang = (session?.data?.language as UssdLanguage) || language;
-  const t = getUssdTranslation(lang);
-
-  try {
-    const result = await signInUssd(phoneNumber);
-
-    await UssdSession.deleteOne({ session_id: sessionId });
-
-    const userName = result.user.fullName || 'User';
-
-    return {
-      message: formatUssdMessage(
-        `${t.welcomeBack} ${userName}!\n\n` +
-        `${t.signedIn}\n` +
-        `${t.youWillReceiveAlerts}\n\n` +
-        `${t.thankYou}`
-      ),
-      shouldEnd: true,
-    };
-  } catch (error: any) {
-    return {
-      message: formatUssdMessage(`${t.error} ${error.message || t.signInFailed}`),
       shouldEnd: true,
     };
   }

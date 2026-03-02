@@ -285,9 +285,12 @@ Base path: `/api`. All protected routes require `Authorization: Bearer <token>`.
 
 3. **Service settings**
    - **Root Directory:** `backend`
-   - **Build Command:** `npm install && npm run build`
+   - **Build Command:** `npm install --include=dev && npm run build`  
+     _(`--include=dev` ensures devDependencies like `@types/node` and TypeScript are installed so the build succeeds; Render may otherwise skip them.)_
    - **Start Command:** `npm start`
-   - **Runtime:** Node
+   - **Runtime:** Node  
+
+   Alternatively, if you use [Render Blueprint](https://docs.render.com/blueprint-spec), the repo root includes a `render.yaml` with these values.
 
 4. **Environment variables** (Render → Environment)
    - `MONGODB_URI` — your MongoDB connection string  

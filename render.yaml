@@ -1,0 +1,14 @@
+# Render Blueprint for ServicePulse backend
+# See: https://docs.render.com/blueprint-spec
+# When connecting this repo, create a Web Service and set rootDir to backend.
+# Use this file for "Blueprint" or set the same values in the dashboard.
+
+services:
+  - type: web
+    name: servicepulse-api
+    runtime: node
+    rootDir: backend
+    # Install devDependencies so TypeScript and @types/* are available during build
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    # Add env vars in Render dashboard: MONGODB_URI, JWT_SECRET, FRONTEND_URL

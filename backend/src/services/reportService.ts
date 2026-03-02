@@ -115,7 +115,11 @@ export async function getReportsByUser(userId: string) {
   });
 }
 
-export async function getReportsByAgency(agencyId: string, filters?: { serviceType?: string; location?: string; status?: string }) {
+export async function getReportsByAgency(
+  agencyId: string,
+  filters?: { serviceType?: string; location?: string; status?: string },
+  options?: { role?: string }
+) {
   const agencyCode = await getAgencyCode(agencyId);
   if (!agencyCode) {
     throw new Error('Invalid agency');
@@ -140,8 +144,18 @@ export async function getReportsByAgency(agencyId: string, filters?: { serviceTy
   if (filters?.serviceType) {
     query.service_type = filters.serviceType;
   }
+  const role = options?.role || '';
+
   if (filters?.status) {
-    query.status = filters.status;
+    // Only admin roles can explicitly filter by any status (including resolved/rejected).
+    if (['agency_admin', 'super_admin', 'admin'].includes(role)) {
+      query.status = filters.status;
+    }
+  }
+
+  // Non-admin agency users should only see active / in-queue items.
+  if (!['agency_admin', 'super_admin', 'admin'].includes(role)) {
+    query.status = { $nin: ['resolved', 'rejected'] };
   }
 
   const reports = await Report.find(query)
@@ -217,6 +231,11 @@ export async function getReportById(
     const u = (populated as any)?.user_id;
     const raw = (populated || report) as any;
     const statusNorm = raw.status === 'received' ? 'submitted' : raw.status;
+    // For non-admin agency roles, hide completed reports entirely (only admins can access).
+    if (!['agency_admin', 'super_admin', 'admin'].includes(role) && ['resolved', 'rejected'].includes(statusNorm)) {
+      throw new Error('Report not found');
+    }
+
     return {
       ...raw,
       id: raw._id.toString(),

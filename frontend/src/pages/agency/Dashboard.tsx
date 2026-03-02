@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { getServiceLabelKey } from '../../config/services';
 import { ServiceIconBadge } from '../../components/ServiceIcon';
+import { PriorityPill } from '../../components/PriorityPill';
 
 interface DashboardStats {
   totalAlerts: number;
@@ -47,6 +48,9 @@ export default function AgencyDashboard() {
   const [recentAlerts, setRecentAlerts] = useState<RecentAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const role = user?.role || '';
+  const isAgencyAdmin = ['agency_admin', 'super_admin', 'admin'].includes(role);
+
   // Refetch when user lands on dashboard so stats/recent activity stay in sync with DB (e.g. after updating a report or creating an alert)
   useEffect(() => {
     if (pathname !== '/agency/dashboard') return;
@@ -70,16 +74,19 @@ export default function AgencyDashboard() {
       ]);
 
       const alerts = alertsRes.data;
-      const reports = reportsRes.data;
+      const allReports = reportsRes.data;
+      const visibleReports = isAgencyAdmin
+        ? allReports
+        : allReports.filter((r: any) => r.status !== 'resolved' && r.status !== 'rejected');
 
       setStats({
         totalAlerts: alerts.length,
-        totalReports: reports.length,
-        pendingReports: reports.filter((r: any) => r.status !== 'resolved').length,
-        resolvedReports: reports.filter((r: any) => r.status === 'resolved').length,
+        totalReports: visibleReports.length,
+        pendingReports: visibleReports.filter((r: any) => r.status !== 'resolved').length,
+        resolvedReports: isAgencyAdmin ? visibleReports.filter((r: any) => r.status === 'resolved').length : 0,
       });
       setClusters(clustersRes.data?.slice(0, 5) || []);
-      setRecentReports(reports.slice(0, 4));
+      setRecentReports(visibleReports.slice(0, 4));
       setRecentAlerts(alerts.slice(0, 3));
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -139,10 +146,12 @@ export default function AgencyDashboard() {
           <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('citizen.pending')}</h3>
           <p className="text-3xl font-bold text-yellow-600">{stats.pendingReports}</p>
         </Link>
-        <Link to="/agency/reports?status=resolved" className="card card-flat block transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
-          <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.resolved')}</h3>
-          <p className="text-3xl font-bold text-green-600">{stats.resolvedReports}</p>
-        </Link>
+        {isAgencyAdmin && (
+          <Link to="/agency/reports?status=resolved" className="card card-flat block transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+            <h3 className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-2">{t('agency.resolved')}</h3>
+            <p className="text-3xl font-bold text-green-600">{stats.resolvedReports}</p>
+          </Link>
+        )}
       </div>
 
       <div className={`grid gap-6 ${clusters.length > 0 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
@@ -157,25 +166,25 @@ export default function AgencyDashboard() {
                   <Link key={`r-${item.id}`} to={`/agency/reports/${item.id}`} className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
                     <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <span className="block text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</span>
-                        {item.data.priority_level === 'high' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Urgent</span>}
-                        {item.data.priority_level === 'medium' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">Priority</span>}
+                        <PriorityPill level={item.data.priority_level} />
                       </div>
                       <span className="text-xs text-neutral-500">{formatDate(item.data.created_at)} · Report</span>
                     </div>
-                    <span className={`shrink-0 text-xs ${item.data.status === 'resolved' ? 'badge-success' : item.data.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}>
-                      {item.data.status === 'resolved' ? t('agency.resolved') : item.data.status === 'in_progress' ? t('agency.inProgress') : t('agency.received')}
-                    </span>
+                    {isAgencyAdmin && (
+                      <span className={`shrink-0 text-xs ${item.data.status === 'resolved' ? 'badge-success' : item.data.status === 'in_progress' ? 'badge-info' : 'badge-warning'}`}>
+                        {item.data.status === 'resolved' ? t('agency.resolved') : item.data.status === 'in_progress' ? t('agency.inProgress') : t('agency.received')}
+                      </span>
+                    )}
                   </Link>
                 ) : (
                   <Link key={`a-${item.id}`} to="/agency/alerts" className="flex items-center gap-3 p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors block">
                     <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <p className="text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</p>
-                        {item.data.priority_level === 'high' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">Urgent</span>}
-                        {item.data.priority_level === 'medium' && <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200">Priority</span>}
+                        <PriorityPill level={item.data.priority_level} />
                       </div>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{item.data.message}</p>
                       <span className="text-xs text-neutral-400">{formatDate(item.createdAt)} · Alert</span>

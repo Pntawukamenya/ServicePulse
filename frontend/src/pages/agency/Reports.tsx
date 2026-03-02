@@ -36,6 +36,9 @@ export default function AgencyReports() {
     status: searchParams.get('status') || '',
   }));
 
+  const role = user?.role || '';
+  const isAgencyAdmin = ['agency_admin', 'super_admin', 'admin'].includes(role);
+
   useEffect(() => {
     const location = searchParams.get('location') || '';
     const status = searchParams.get('status') || '';
@@ -57,7 +60,12 @@ export default function AgencyReports() {
       if (filters.status) params.append('status', filters.status);
 
       const response = await api.get(`/reports/agency?${params.toString()}`);
-      setReports(response.data);
+      const allReports: Report[] = response.data;
+      // Non-admin agency users should only see active/queue items (hide completed)
+      const visibleReports = isAgencyAdmin
+        ? allReports
+        : allReports.filter((r) => r.status !== 'resolved' && (r as any).status !== 'rejected');
+      setReports(visibleReports);
     } catch (error) {
       console.error('Failed to fetch reports:', error);
     } finally {
@@ -75,6 +83,10 @@ export default function AgencyReports() {
   };
 
   const getStatusLabel = (status: string) => {
+    if (!isAgencyAdmin) {
+      // For non-admin agency staff, show a single queue-like label
+      return t('citizen.pending');
+    }
     const map: Record<string, string> = {
       received: t('agency.received'),
       in_progress: t('agency.inProgress'),
@@ -84,6 +96,10 @@ export default function AgencyReports() {
   };
 
   const getStatusBadge = (status: string) => {
+    if (!isAgencyAdmin) {
+      // Neutral queue badge for all visible items
+      return 'badge-warning';
+    }
     switch (status) {
       case 'resolved': return 'badge-success';
       case 'in_progress': return 'badge-info';

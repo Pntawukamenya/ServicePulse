@@ -64,6 +64,10 @@ export default function AgencyAlerts() {
   const fetchNotifications = async () => {
     try {
       const response = await api.get('/notifications/agency');
+      const role = user?.role || '';
+      const isAgencyAdmin = ['agency_admin', 'super_admin', 'admin'].includes(role);
+      // For now, all alerts are visible; priority is what matters most for non-admins.
+      // If we ever track alert completion, we can filter here similar to reports.
       setNotifications(response.data);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);

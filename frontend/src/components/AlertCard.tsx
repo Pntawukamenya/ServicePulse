@@ -1,4 +1,5 @@
 import { ServiceIconBadge } from './ServiceIcon';
+import { PriorityPill } from './PriorityPill';
 
 interface AlertCardProps {
   id?: string;
@@ -35,16 +36,7 @@ export default function AlertCard({
 }: AlertCardProps) {
   const dateStr = created_at ?? createdAt;
   const progress = totalRecipients > 0 ? Math.round((deliveryCount / totalRecipients) * 100) : 0;
-  const priorityBadge =
-    priority_level === 'high' ? (
-      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" title="High priority">
-        Urgent
-      </span>
-    ) : priority_level === 'medium' ? (
-      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200" title="Medium priority">
-        Priority
-      </span>
-    ) : null;
+  const priorityBadge = <PriorityPill level={priority_level} />;
 
   return (
     <div className="card overflow-hidden transition-shadow duration-200 hover:shadow-md">

@@ -83,7 +83,7 @@ export const getAgencyReports = async (req: AuthRequest, res: Response): Promise
 
     const reports = req.userRole === 'super_admin' && !req.userAgencyId
       ? await getAllReports(filters)
-      : await getReportsByAgency(req.userAgencyId!, filters);
+      : await getReportsByAgency(req.userAgencyId!, filters, { role: req.userRole || '' });
     res.status(200).json(reports);
   } catch (error: any) {
     logError(req, error.message, error);
