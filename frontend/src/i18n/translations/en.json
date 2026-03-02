@@ -320,6 +320,8 @@
     "latestReports": "Latest Reports",
     "profileSettings": "Profile Settings",
     "profileHint": "Update your account details.",
+    "agencyRole": "Agency role",
+    "agencyRoleHint": "Your role or title within the agency (saved at sign-up, editable here).",
     "profileUpdated": "Profile updated successfully",
     "reg": "REG - Electricity",
     "wasac": "WASAC - Water",

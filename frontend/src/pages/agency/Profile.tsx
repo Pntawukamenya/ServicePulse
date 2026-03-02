@@ -11,6 +11,7 @@ interface ProfileForm {
   email: string;
   phoneNumber: string;
   avatarUrl: string;
+  agencyRole: string;
 }
 
 export default function AgencyProfile() {
@@ -21,7 +22,7 @@ export default function AgencyProfile() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const { register, handleSubmit, reset, watch, setValue } = useForm<ProfileForm>({
-    defaultValues: { avatarUrl: '' },
+    defaultValues: { avatarUrl: '', agencyRole: '' },
   });
 
   const showProfilePicture = !isAdmin();
@@ -40,6 +41,7 @@ export default function AgencyProfile() {
         email: response.data.email || '',
         phoneNumber: response.data.phone_number || '',
         avatarUrl,
+        agencyRole: response.data.agency_role || '',
       });
       if (response.data.avatar_url && user) {
         updateUserAvatar(response.data.avatar_url);
@@ -59,6 +61,7 @@ export default function AgencyProfile() {
         full_name: data.fullName || null,
         email: data.email || null,
         phone_number: data.phoneNumber || null,
+        agency_role: data.agencyRole?.trim() || null,
       };
       if (showProfilePicture) {
         payload.avatar_url = data.avatarUrl || null;
@@ -71,7 +74,14 @@ export default function AgencyProfile() {
         const token = useAuthStore.getState().token;
         if (token) {
           const displayName = response.data.full_name || response.data.email || response.data.phone_number;
-          setAuth({ ...user, fullName: displayName, email: response.data.email, phoneNumber: response.data.phone_number, avatarUrl: response.data.avatar_url ?? user.avatarUrl }, token);
+          setAuth({
+            ...user,
+            fullName: displayName,
+            email: response.data.email,
+            phoneNumber: response.data.phone_number,
+            avatarUrl: response.data.avatar_url ?? user.avatarUrl,
+            agencyRole: response.data.agency_role ?? user.agencyRole ?? null,
+          }, token);
         }
       }
       fetchProfile();
@@ -165,6 +175,22 @@ export default function AgencyProfile() {
               className="input"
               placeholder="+250 788 123 456"
             />
+          </div>
+
+          <div>
+            <label htmlFor="agencyRole" className="block text-sm font-medium mb-1">
+              {t('agency.agencyRole')}
+            </label>
+            <input
+              id="agencyRole"
+              type="text"
+              {...register('agencyRole')}
+              className="input"
+              placeholder="e.g. Engineer, Dispatcher"
+            />
+            <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              {t('agency.agencyRoleHint')}
+            </p>
           </div>
 
           <button

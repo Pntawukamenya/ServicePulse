@@ -141,7 +141,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { full_name, email, phone_number, location, sms_opt_in, avatar_url } = req.body;
+    const { full_name, email, phone_number, location, sms_opt_in, avatar_url, agency_role } = req.body;
 
     const currentUser = await User.findById(req.userId).select('email phone_number').lean();
     if (currentUser) {
@@ -160,6 +160,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
     if (location !== undefined) updates.location = location;
     if (sms_opt_in !== undefined) updates.sms_opt_in = sms_opt_in;
     if (avatar_url !== undefined) updates.avatar_url = avatar_url === '' ? null : avatar_url;
+    if (agency_role !== undefined) updates.agency_role = agency_role === '' ? null : agency_role;
 
     const user = await User.findByIdAndUpdate(
       req.userId,

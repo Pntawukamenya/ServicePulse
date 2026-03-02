@@ -14,6 +14,7 @@ interface RegisterForm {
   password: string;
   role: 'citizen' | 'agency_employee';
   agencyCode?: string;
+   agencyRole?: string;
   district: string;
   sector: string;
   cell?: string;
@@ -36,6 +37,7 @@ export default function Register() {
   const { register, watch, setValue, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     defaultValues: {
       role: 'citizen',
+      agencyRole: '',
       district: '',
       sector: '',
       cell: '',
@@ -75,6 +77,9 @@ export default function Register() {
       };
       if (data.role === 'agency_employee' && data.agencyCode) {
         payload.agencyCode = data.agencyCode;
+        if (data.agencyRole) {
+          payload.agencyRole = data.agencyRole.trim();
+        }
       }
       if (data.role === 'citizen' && data.district && data.sector) {
         payload.district = data.district;
@@ -212,12 +217,22 @@ export default function Register() {
 
             {watch('role') === 'agency_employee' && (
               <div>
-                <select id="agencyCode" {...register('agencyCode')} className="select-location" aria-label={t('auth.selectAgency')}>
+                <select id="agencyCode" {...register('agencyCode')} className="select-location mb-3" aria-label={t('auth.selectAgency')}>
                   <option value="">{t('auth.selectAgency')}</option>
                   <option value="REG">{t('home.reg')}</option>
                   <option value="WASAC">{t('home.wasac')}</option>
                   <option value="EMERGENCY">{t('home.emergency')}</option>
                 </select>
+                <label htmlFor="agencyRole" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Agency role (e.g. engineer, dispatcher)
+                </label>
+                <input
+                  id="agencyRole"
+                  type="text"
+                  {...register('agencyRole')}
+                  className="input w-full"
+                  placeholder="Your role in the agency"
+                />
               </div>
             )}
 

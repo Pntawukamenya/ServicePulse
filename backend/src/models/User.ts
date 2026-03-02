@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
     },
     agency_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Agency', default: null },
     agency_code: { type: String, default: null },
+    agency_role: { type: String, default: null, trim: true, maxlength: 100 },
     status: { type: String, enum: ['pending_otp', 'pending_approval', 'active'], default: 'pending_otp' },
     sms_opt_in: { type: Boolean, default: false },
     terms_accepted: { type: Boolean, default: false },

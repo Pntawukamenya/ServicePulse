@@ -8,6 +8,7 @@ interface User {
   role: string;
   agencyId?: string;
   agencyCode?: string;
+  agencyRole?: string | null;
   avatarUrl?: string | null;
 }
 

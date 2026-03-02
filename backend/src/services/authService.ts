@@ -17,6 +17,7 @@ export interface RegisterData {
   password: string;
   role: 'citizen' | 'agency_employee';
   agencyCode?: string;
+  agencyRole?: string;
   district?: string;
   sector?: string;
   cell?: string;
@@ -96,12 +97,13 @@ function formatUser(user: any) {
     role: u.role,
     agencyId: u.agency_id?.toString() || u.agency_id,
     agencyCode: u.agency_code,
+    agencyRole: u.agency_role ?? null,
     avatarUrl: u.avatar_url ?? null,
   };
 }
 
 export async function registerUser(data: RegisterData) {
-  const { identifier, password, role, agencyCode, district, sector, cell, village, termsAccepted } = data;
+  const { identifier, password, role, agencyCode, agencyRole, district, sector, cell, village, termsAccepted } = data;
 
   if (!termsAccepted) {
     throw new Error('Terms and conditions must be accepted');
@@ -140,6 +142,7 @@ export async function registerUser(data: RegisterData) {
     identifier_type: identifierType,
     role,
     agency_code: agencyCode || null,
+    agency_role: role === 'agency_employee' && agencyRole ? agencyRole.trim() : null,
     status,
     terms_accepted: true,
   });
@@ -557,7 +560,7 @@ export async function changePassword(userId: string, oldPassword: string, newPas
 
 export async function getUserById(userId: string) {
   const user = await User.findById(userId)
-    .select('email full_name phone_number location role agency_id agency_code sms_opt_in identifier_type status avatar_url created_at')
+    .select('email full_name phone_number location role agency_id agency_code agency_role sms_opt_in identifier_type status avatar_url created_at')
     .lean();
 
   if (!user) {

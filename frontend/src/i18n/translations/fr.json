@@ -318,6 +318,8 @@
     "latestReports": "Derniers rapports",
     "profileSettings": "Paramètres du profil",
     "profileHint": "Mettez à jour vos informations.",
+    "agencyRole": "Rôle dans l'agence",
+    "agencyRoleHint": "Votre rôle ou titre dans l'agence (enregistré à l'inscription, modifiable ici).",
     "profileUpdated": "Profil mis à jour avec succès",
     "reg": "REG - Électricité",
     "wasac": "WASAC - Eau",
