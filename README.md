@@ -1,3 +1,8 @@
+# For the Final version of the product/solution Assignment
+
+** Presentation Video [Open in Google Drive](https://drive.google.com/file/d/1pNSBYfAfd7QnbjiYCHU4NFzwV3GWmse1/view?usp=sharing)
+**Link to the Deployed Web-app [ServicePulse](https://service-pulse-topaz.vercel.app/)
+
 # ServicePulse
 
 **A platform for public service communication and citizen reporting in Rwanda.** ServicePulse combines SMS alerts (for citizens without reliable internet) with web dashboards so government agencies and citizens stay connected.
