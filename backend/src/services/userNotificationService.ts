@@ -1,4 +1,6 @@
+import mongoose from 'mongoose';
 import UserNotification from '../models/UserNotification';
+import Report from '../models/Report';
 
 export type UserNotificationType = 'status_update' | 'assignment' | 'resolution' | 'rejection' | 'info';
 
@@ -37,15 +39,31 @@ export async function getNotificationsForUser(userId: string, options?: { limit?
     .limit(limit)
     .lean();
 
-  return list.map((n) => ({
-    id: (n as any)._id.toString(),
-    user_id: (n as any).user_id?.toString(),
-    message: (n as any).message,
-    related_report_id: (n as any).related_report_id?.toString() || null,
-    read: (n as any).read,
-    type: (n as any).type,
-    created_at: (n as any).createdAt ?? (n as any).created_at,
-  }));
+  const reportIds = list
+    .map((n) => (n as any).related_report_id)
+    .filter((id) => id && mongoose.Types.ObjectId.isValid(id));
+  const reports =
+    reportIds.length > 0
+      ? await Report.find({ _id: { $in: reportIds } }).select('service_type').lean()
+      : [];
+  const serviceTypeByReportId: Record<string, string> = {};
+  for (const r of reports as any[]) {
+    if (r._id && r.service_type) serviceTypeByReportId[r._id.toString()] = r.service_type;
+  }
+
+  return list.map((n) => {
+    const reportId = (n as any).related_report_id?.toString();
+    return {
+      id: (n as any)._id.toString(),
+      user_id: (n as any).user_id?.toString(),
+      message: (n as any).message,
+      related_report_id: reportId || null,
+      read: (n as any).read,
+      type: (n as any).type,
+      created_at: (n as any).createdAt ?? (n as any).created_at,
+      service_type: reportId ? serviceTypeByReportId[reportId] || null : null,
+    };
+  });
 }
 
 export async function getUnreadCount(userId: string): Promise<number> {

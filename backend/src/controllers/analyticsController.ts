@@ -9,7 +9,7 @@ export const reportAnalytics = async (req: AuthRequest, res: Response): Promise<
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const allowedRoles = ['agency', 'agency_admin', 'super_admin', 'admin'];
+    const allowedRoles = ['agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'];
     if (!req.userRole || !allowedRoles.includes(req.userRole)) {
       res.status(403).json({ error: 'Agency or admin access required' });
       return;

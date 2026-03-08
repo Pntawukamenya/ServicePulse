@@ -7,7 +7,7 @@ const router = Router();
 router.get(
   '/reports',
   authenticate,
-  requireRole('agency', 'agency_admin', 'super_admin', 'admin'),
+  requireRole('agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'),
   reportAnalytics
 );
 

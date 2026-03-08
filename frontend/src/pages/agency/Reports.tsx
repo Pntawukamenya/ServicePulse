@@ -1,18 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAuthStore } from '../../store/authStore';
-import { getServicesByAgency, getServiceLabelKey } from '../../config/services';
+import { getServicesByAgency, getServiceDisplayName } from '../../config/services';
 import type { AgencyCode } from '../../config/services';
 import ReportCard from '../../components/ReportCard';
+import Pagination, { DEFAULT_PAGE_SIZE } from '../../components/Pagination';
 
 interface Report {
   id: string;
   service_type: string;
   location: string;
   description: string;
-  status: 'received' | 'in_progress' | 'resolved';
+  status: 'received' | 'submitted' | 'in_progress' | 'escalated' | 'resolved';
+  assigned_to?: string | null;
   created_at: string;
   updated_at?: string;
   users?: {
@@ -35,6 +37,7 @@ export default function AgencyReports() {
     serviceType: searchParams.get('serviceType') || '',
     status: searchParams.get('status') || '',
   }));
+  const [currentPage, setCurrentPage] = useState(1);
 
   const role = user?.role || '';
   const isAgencyAdmin = ['agency_admin', 'super_admin', 'admin'].includes(role);
@@ -61,11 +64,8 @@ export default function AgencyReports() {
 
       const response = await api.get(`/reports/agency?${params.toString()}`);
       const allReports: Report[] = response.data;
-      // Non-admin agency users should only see active/queue items (hide completed)
-      const visibleReports = isAgencyAdmin
-        ? allReports
-        : allReports.filter((r) => r.status !== 'resolved' && (r as any).status !== 'rejected');
-      setReports(visibleReports);
+      // Backend already restricts non-admin to non-escalated only; resolved/rejected are visible so they can see reports after resolving
+      setReports(allReports);
     } catch (error) {
       console.error('Failed to fetch reports:', error);
     } finally {
@@ -73,7 +73,16 @@ export default function AgencyReports() {
     }
   };
 
-  const updateStatus = async (reportId: string, newStatus: 'received' | 'in_progress' | 'resolved') => {
+  const handleClaim = async (reportId: string) => {
+    try {
+      await api.post(`/reports/${reportId}/claim`);
+      fetchReports();
+    } catch (error) {
+      console.error('Failed to claim report:', error);
+    }
+  };
+
+  const updateStatus = async (reportId: string, newStatus: 'resolved' | 'escalated') => {
     try {
       await api.put(`/reports/${reportId}/status`, { status: newStatus });
       fetchReports();
@@ -83,26 +92,23 @@ export default function AgencyReports() {
   };
 
   const getStatusLabel = (status: string) => {
-    if (!isAgencyAdmin) {
-      // For non-admin agency staff, show a single queue-like label
-      return t('citizen.pending');
-    }
     const map: Record<string, string> = {
       received: t('agency.received'),
+      submitted: t('agency.received'),
       in_progress: t('agency.inProgress'),
+      escalated: t('agency.escalated'),
       resolved: t('agency.resolved'),
+      rejected: 'Rejected',
     };
     return map[status] || status;
   };
 
   const getStatusBadge = (status: string) => {
-    if (!isAgencyAdmin) {
-      // Neutral queue badge for all visible items
-      return 'badge-warning';
-    }
     switch (status) {
       case 'resolved': return 'badge-success';
       case 'in_progress': return 'badge-info';
+      case 'escalated': return 'badge-warning';
+      case 'rejected': return 'badge-neutral';
       default: return 'badge-warning';
     }
   };
@@ -119,6 +125,17 @@ export default function AgencyReports() {
       minute: '2-digit',
     });
   };
+
+  const pageSize = DEFAULT_PAGE_SIZE;
+  // API returns reports already sorted by priority (prioritizationService); we only slice for pagination.
+  const paginatedReports = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return reports.slice(start, start + pageSize);
+  }, [reports, currentPage, pageSize]);
+  const totalPages = Math.max(1, Math.ceil(reports.length / pageSize));
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
+  }, [currentPage, totalPages, reports.length]);
 
   if (loading) {
     return (
@@ -202,6 +219,7 @@ export default function AgencyReports() {
               <option value="">{t('agency.allStatuses')}</option>
               <option value="received">{t('agency.received')}</option>
               <option value="in_progress">{t('agency.inProgress')}</option>
+              {isAgencyAdmin && <option value="escalated">{t('agency.escalated')}</option>}
               <option value="resolved">{t('agency.resolved')}</option>
             </select>
           </div>
@@ -217,18 +235,22 @@ export default function AgencyReports() {
           <p className="text-neutral-600 dark:text-neutral-400">Reports from citizens will appear here</p>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
-          {reports.map((report) => (
+          {paginatedReports.map((report) => (
             <ReportCard
               key={report.id}
               compact
               to={`/agency/reports/${report.id}`}
               id={report.id}
               serviceType={report.service_type}
-              displayLabel={getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : undefined}
+              displayLabel={getServiceDisplayName(report.service_type, t)}
               location={report.location}
               description={report.description}
               status={report.status}
+              assigned_to={report.assigned_to}
+              currentUserId={user?.id}
+              isAgencyAdmin={isAgencyAdmin}
               created_at={report.created_at}
               updated_at={report.updated_at}
               reporter={report.users}
@@ -240,14 +262,23 @@ export default function AgencyReports() {
               submittedLabel={t('common.submitted')}
               updatedLabel={t('common.updated')}
               reportedByLabel={t('agency.reportedBy')}
-              markInProgressLabel={t('agency.markInProgress')}
+              claimLabel={t('agency.claim')}
               markResolvedLabel={t('agency.markResolved')}
               priority_level={(report as any).priority_level}
-              onMarkInProgress={() => updateStatus(report.id, 'in_progress')}
+              onClaim={() => handleClaim(report.id)}
               onMarkResolved={() => updateStatus(report.id, 'resolved')}
             />
           ))}
         </div>
+        <div className="mt-8">
+          <Pagination
+            totalItems={reports.length}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            pageSize={pageSize}
+          />
+        </div>
+        </>
       )}
     </div>
   );

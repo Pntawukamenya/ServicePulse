@@ -56,8 +56,15 @@ export default function Layout({ children }: LayoutProps) {
         { to: '/notifications', label: t('nav.notifications'), icon: <DASHBOARD_ICONS.AlertIcon /> },
         { to: '/agency/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
       ];
+      const isAgencyAdminRole = ['agency_admin', 'super_admin', 'admin'].includes(user?.role || '');
+      const agencyName = user?.agencyCode || t('nav.roleAgency');
+      const agencyRoleLabel = isAgencyAdminRole
+        ? `${agencyName} – Admin`
+        : user?.agencyRole
+          ? `${agencyName} – ${user.agencyRole}`
+          : agencyName;
       return (
-        <DashboardLayout roleLabel={t('nav.roleAgency')} navItems={agencyNavItems}>
+        <DashboardLayout roleLabel={agencyRoleLabel} navItems={agencyNavItems}>
           {children}
         </DashboardLayout>
       );
@@ -93,9 +100,16 @@ export default function Layout({ children }: LayoutProps) {
       { to: '/notifications', label: t('nav.notifications'), icon: <DASHBOARD_ICONS.AlertIcon /> },
       { to: '/agency/profile', label: t('nav.profile'), icon: <DASHBOARD_ICONS.ProfileIcon /> },
     ];
+    const isAgencyAdminRole = ['agency_admin', 'super_admin', 'admin'].includes(user?.role || '');
+    const agencyName = user?.agencyCode || t('nav.roleAgency');
+    const agencyRoleLabel = isAgencyAdminRole
+      ? `${agencyName} – Admin`
+      : user?.agencyRole
+        ? `${agencyName} – ${user.agencyRole}`
+        : agencyName;
     return (
       <DashboardLayout
-        roleLabel={t('nav.roleAgency')}
+        roleLabel={agencyRoleLabel}
         navItems={agencyNavItems}
       >
         {children}
@@ -130,7 +144,7 @@ export default function Layout({ children }: LayoutProps) {
                       </Link>
                     </>
                   )}
-                  {isAgency() && (
+                  {(isAgency() || isAdmin()) && (
                     <>
                       <Link to="/agency/dashboard" className="px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
                         {t('nav.dashboard')}
@@ -248,7 +262,7 @@ export default function Layout({ children }: LayoutProps) {
                       </Link>
                     </>
                   )}
-{isAgency() && (
+{(isAgency() || isAdmin()) && (
                     <>
                       <Link to="/agency/dashboard" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
                         {t('nav.dashboard')}

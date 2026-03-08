@@ -114,10 +114,6 @@ export default function AgencyProfile() {
           <div className="mb-4 alert-success">{success}</div>
         )}
 
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          {t('agency.profileHint')}
-        </p>
-
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {showProfilePicture && (
             <ProfileAvatar
@@ -203,7 +199,7 @@ export default function AgencyProfile() {
         </form>
         </div>
 
-        <div className="card">
+        <div className="card self-start">
           <h2 className="text-xl font-semibold mb-4">{t('auth.changePassword')}</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
             {t('auth.changePasswordHint')}

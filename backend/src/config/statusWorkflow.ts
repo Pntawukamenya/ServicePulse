@@ -1,6 +1,6 @@
 /**
- * Report status workflow: enforceable lifecycle and allowed transitions.
- * Submitted → Under Review → Assigned → In Progress → Resolved | Rejected
+ * Report status workflow: Claim-based.
+ * Submitted → (claim) → In Progress → Resolved | Escalated. Only agency_admin can resolve escalated.
  */
 
 export const REPORT_STATUSES = [
@@ -8,6 +8,7 @@ export const REPORT_STATUSES = [
   'under_review',
   'assigned',
   'in_progress',
+  'escalated',
   'resolved',
   'rejected',
 ] as const;
@@ -27,12 +28,13 @@ export function normalizeStatus(status: string): ReportStatus {
   return 'submitted';
 }
 
-/** Allowed transitions: from -> to[]. Legacy: submitted may go directly to in_progress or resolved for backward compat. */
+/** Allowed transitions: claim sets in_progress + assigned_to; in_progress → resolved | escalated; escalated → resolved (admin only). */
 export const ALLOWED_TRANSITIONS: Record<ReportStatus, ReportStatus[]> = {
-  submitted: ['under_review', 'rejected', 'in_progress', 'resolved'],
-  under_review: ['assigned', 'in_progress', 'rejected'],
-  assigned: ['in_progress', 'rejected'],
-  in_progress: ['resolved', 'rejected'],
+  submitted: ['in_progress', 'resolved', 'rejected'],
+  under_review: ['in_progress', 'resolved', 'rejected'],
+  assigned: ['in_progress', 'resolved', 'rejected'],
+  in_progress: ['resolved', 'escalated', 'rejected'],
+  escalated: ['resolved', 'rejected'],
   resolved: [],
   rejected: [],
 };

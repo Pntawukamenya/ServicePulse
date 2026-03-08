@@ -165,7 +165,7 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
     const user = await User.findByIdAndUpdate(
       req.userId,
       { $set: updates },
-      { new: true }
+      { returnDocument: 'after' }
     ).lean();
 
     if (!user) {

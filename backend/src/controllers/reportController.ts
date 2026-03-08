@@ -7,6 +7,7 @@ import {
   getAllReports,
   getReportById,
   updateReportStatus,
+  claimReport,
   getReportClusters,
   getAllReportClusters,
   getReportsNearby,
@@ -88,6 +89,31 @@ export const getAgencyReports = async (req: AuthRequest, res: Response): Promise
   } catch (error: any) {
     logError(req, error.message, error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const claim = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    if (!req.userAgencyId && req.userRole !== 'super_admin') {
+      res.status(403).json({ error: 'Agency access required' });
+      return;
+    }
+
+    const report = await claimReport({
+      reportId: req.params.id,
+      userId: req.userId,
+      agencyId: req.userAgencyId!,
+      userRole: req.userRole || 'agency',
+    });
+
+    res.status(200).json(report);
+  } catch (error: any) {
+    logError(req, error.message, error);
+    res.status(400).json({ error: error.message });
   }
 };
 

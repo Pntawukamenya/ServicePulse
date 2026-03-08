@@ -2,6 +2,7 @@ import Notification from '../models/Notification';
 import User from '../models/User';
 import { sendSMS } from '../config/sms';
 import { sendEmail } from '../config/email';
+import { getServiceDisplayName } from '../config/services';
 import { prioritizeNotifications } from './prioritizationService';
 
 export interface CreateNotificationData {
@@ -45,7 +46,7 @@ export async function createNotification(data: CreateNotificationData) {
       if (u.email) {
         return sendEmail({
           to: u.email,
-          subject: `ServicePulse Alert: ${serviceType}`,
+          subject: `ServicePulse Alert: ${getServiceDisplayName(serviceType)}`,
           text: message,
         });
       }

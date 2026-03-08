@@ -38,7 +38,12 @@ export async function sendSMS(to: string, message: string): Promise<{ success: b
 
     return { success: true };
   } catch (error: any) {
-    console.error('SMS sending error:', error);
-    return { success: false, error: error.message };
+    // Twilio trial accounts can only send to verified numbers (code 21608)
+    if (error?.code === 21608) {
+      console.warn(`SMS skipped (unverified number): ${to}. Verify at twilio.com/console/phone-numbers/verified or upgrade your account.`);
+    } else {
+      console.error('SMS sending error:', error?.message || error);
+    }
+    return { success: false, error: error?.message };
   }
 }

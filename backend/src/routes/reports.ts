@@ -5,6 +5,7 @@ import {
   getMyReports,
   getAgencyReports,
   getOne,
+  claim,
   updateStatus,
   getClusters,
   getNearby,
@@ -37,24 +38,25 @@ router.post(
 
 router.get('/my-reports', authenticate, requireRole('citizen'), getMyReports);
 
-router.get('/nearby', authenticate, requireRole('citizen', 'agency', 'agency_admin', 'super_admin', 'admin'), getNearby);
+router.get('/nearby', authenticate, requireRole('citizen', 'agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'), getNearby);
 
 // Agency routes (must be before /:id so "agency" is not captured as id)
-router.get('/agency', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), getAgencyReports);
-router.get('/agency/clusters', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), getClusters);
+router.get('/agency', authenticate, requireRole('agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'), getAgencyReports);
+router.get('/agency/clusters', authenticate, requireRole('agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'), getClusters);
 
 // Parameterized routes (after literal paths)
-router.get('/:id', authenticate, requireRole('citizen', 'agency', 'agency_admin', 'super_admin', 'admin'), getOne);
+router.get('/:id', authenticate, requireRole('citizen', 'agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'), getOne);
+router.post('/:id/claim', authenticate, requireRole('agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'), claim);
 router.put(
   '/:id/status',
   authenticate,
-  requireRole('agency', 'agency_admin', 'super_admin', 'admin'),
+  requireRole('agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'),
   validate([
-    body('status').trim().notEmpty().isIn(['submitted', 'received', 'under_review', 'assigned', 'in_progress', 'resolved', 'rejected']),
+    body('status').trim().notEmpty().isIn(['submitted', 'received', 'under_review', 'assigned', 'in_progress', 'escalated', 'resolved', 'rejected']),
     body('comment').optional().trim().isLength({ max: 500 }),
   ]),
   updateStatus
 );
-router.delete('/:id', authenticate, requireRole('citizen', 'agency_admin', 'super_admin', 'agency', 'admin'), remove);
+router.delete('/:id', authenticate, requireRole('citizen', 'agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'), remove);
 
 export default router;

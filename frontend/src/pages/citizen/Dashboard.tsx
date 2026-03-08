@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { getServiceLabelKey } from '../../config/services';
+import { getServiceDisplayName } from '../../config/services';
 import { ServiceIconBadge } from '../../components/ServiceIcon';
 
 interface DashboardStats {
@@ -102,7 +102,10 @@ export default function CitizenDashboard() {
     <div className="max-w-7xl mx-auto w-full">
       <h1 className="text-h1 mb-2">{t('citizen.dashboard')}</h1>
       <p className="text-neutral-600 dark:text-neutral-400 mb-8">
-        {t('citizen.welcome')}, {user?.fullName || user?.email || user?.phoneNumber}
+        {t('citizen.welcome')}, {(() => {
+          const d = user?.fullName || user?.email || user?.phoneNumber;
+          return d ? d.trim().split(/\s+/)[0] : d;
+        })()}
       </p>
 
       <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -185,7 +188,7 @@ export default function CitizenDashboard() {
               <Link key={r.id} to={`/citizen/reports/${r.id}`} className="flex items-center gap-3 p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
                 <ServiceIconBadge serviceCode={r.service_type} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <span className="font-medium text-sm block truncate">{getServiceLabelKey(r.service_type) ? t(getServiceLabelKey(r.service_type)!) : r.service_type}</span>
+                  <span className="font-medium text-sm block truncate">{getServiceDisplayName(r.service_type, t)}</span>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">{r.location}</p>
                 </div>
                 <span className={`shrink-0 ${getStatusBadge(r.status)}`}>

@@ -15,7 +15,7 @@ const router = Router();
 router.post(
   '/',
   authenticate,
-  requireRole('agency', 'agency_admin', 'super_admin', 'admin'),
+  requireRole('agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'),
   validate([
     body('serviceType').trim().notEmpty(),
     body('message').trim().notEmpty().isLength({ min: 10, max: 160 }),
@@ -24,7 +24,7 @@ router.post(
   create
 );
 
-router.get('/agency', authenticate, requireRole('agency', 'agency_admin', 'super_admin', 'admin'), getAgencyNotifications);
+router.get('/agency', authenticate, requireRole('agency', 'agency_employee', 'agency_admin', 'super_admin', 'admin'), getAgencyNotifications);
 
 // User-level notifications (inbox: report updates, etc.)
 router.get('/user', authenticate, getMyNotifications);

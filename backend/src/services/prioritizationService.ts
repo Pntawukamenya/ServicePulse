@@ -1,13 +1,13 @@
 /**
- * Prioritization algorithm for Agency admins
- * Ensures urgent reports and notifications are shown first for clarity and faster resolution.
+ * Prioritization algorithm applied per agency.
+ * Each agency (REG, WASAC, EMERGENCY) gets its own sorted list so agencies are independent.
  *
  * Priority is based on:
- * 1. Service type urgency (Emergency > REG/electricity > WASAC/water)
- * 2. Status (unresolved first: received > in_progress > resolved)
- * 3. Description keywords indicating urgency/severity
+ * 1. Service type urgency (within that agency: e.g. REG safety > REG billing)
+ * 2. Status (unresolved first: received > in_progress > escalated > resolved)
+ * 3. Description keywords (generic + agency-specific: REG=power/transformer, WASAC=water/pipe, EMERGENCY=fire/crime)
  * 4. Recency (newer reports within 24–48h get a boost)
- * 5. Location hotspot (same location = more citizens affected)
+ * 5. Location hotspot (only reports from same agency at same location)
  */
 
 export type PriorityLevel = 'high' | 'medium' | 'low';
@@ -39,27 +39,49 @@ const SERVICE_URGENCY_WEIGHT: Record<string, number> = {
   WASAC_BILLING: 40,
 };
 
-/** Status priority: unresolved first so admins tackle pending work. */
+/** Status priority: unresolved first so admins tackle pending work. Escalated kept high for admin attention. */
 const STATUS_WEIGHT: Record<string, number> = {
   received: 30,
   submitted: 30,
   under_review: 28,
   assigned: 25,
   in_progress: 20,
+  escalated: 28,
   resolved: 0,
   rejected: 0,
 };
 
-/** Keywords in description that indicate higher urgency (case-insensitive). */
+/** Generic urgency keywords (all agencies). */
 const URGENCY_KEYWORDS: { pattern: RegExp; boost: number }[] = [
   { pattern: /\b(emergency|urgent|critical|asap|immediately)\b/i, boost: 25 },
-  { pattern: /\b(outage|no power|no electricity|blackout)\b/i, boost: 15 },
-  { pattern: /\b(no water|water cut|burst|flood|leak)\b/i, boost: 15 },
   { pattern: /\b(fire|danger|safety|risk|hazard)\b/i, boost: 20 },
   { pattern: /\b(crime|theft|break-in|police)\b/i, boost: 18 },
   { pattern: /\b(ambulance|injury|accident|hospital)\b/i, boost: 20 },
-  { pattern: /\b(sewage|contamination|health)\b/i, boost: 12 },
-  { pattern: /\b(transformer|spark|sparking|electrocution)\b/i, boost: 15 },
+];
+
+/** REG (electricity): agency-specific keywords so REG list is independent and relevant. */
+const REG_URGENCY_KEYWORDS: { pattern: RegExp; boost: number }[] = [
+  { pattern: /\b(outage|no power|no electricity|blackout|power cut)\b/i, boost: 18 },
+  { pattern: /\b(transformer|spark|sparking|electrocution|wire)\b/i, boost: 15 },
+  { pattern: /\b(load shedding|blackout)\b/i, boost: 12 },
+  { pattern: /\b(meter|billing)\b/i, boost: 5 },
+];
+
+/** WASAC (water): agency-specific keywords so WASAC list is independent and relevant. */
+const WASAC_URGENCY_KEYWORDS: { pattern: RegExp; boost: number }[] = [
+  { pattern: /\b(no water|water cut|burst|flood|leak|pipe)\b/i, boost: 18 },
+  { pattern: /\b(sewage|contamination|dirty water|health)\b/i, boost: 15 },
+  { pattern: /\b(low pressure|no pressure|dry)\b/i, boost: 12 },
+  { pattern: /\b(connection|billing)\b/i, boost: 5 },
+];
+
+/** EMERGENCY: agency-specific keywords so emergency list is independent and relevant. */
+const EMERGENCY_URGENCY_KEYWORDS: { pattern: RegExp; boost: number }[] = [
+  { pattern: /\b(fire|burning|smoke)\b/i, boost: 20 },
+  { pattern: /\b(crime|theft|break-in|robbery|police)\b/i, boost: 18 },
+  { pattern: /\b(ambulance|injury|accident|hospital|medical)\b/i, boost: 20 },
+  { pattern: /\b(disaster|flood|landslide|emergency)\b/i, boost: 22 },
+  { pattern: /\b(fraud|rib|investigation)\b/i, boost: 15 },
 ];
 
 const DEFAULT_SERVICE_WEIGHT = 40;
@@ -96,13 +118,23 @@ function getStatusWeight(status: string): number {
   return STATUS_WEIGHT[status] ?? 0;
 }
 
-function getDescriptionBoost(description: string): number {
+/** Apply generic + agency-specific keyword boosts so each agency's prioritization is independent and relevant. */
+function getDescriptionBoost(description: string, serviceType?: string): number {
   if (!description || typeof description !== 'string') return 0;
   let total = 0;
+  const norm = (serviceType || '').trim().toUpperCase();
   for (const { pattern, boost } of URGENCY_KEYWORDS) {
     if (pattern.test(description)) total += boost;
   }
-  return Math.min(total, 30); // cap so description doesn't overwhelm
+  const agencyKeywords =
+    norm.startsWith('REG') ? REG_URGENCY_KEYWORDS
+    : norm.startsWith('WASAC') ? WASAC_URGENCY_KEYWORDS
+    : norm.startsWith('EMERGENCY') ? EMERGENCY_URGENCY_KEYWORDS
+    : [];
+  for (const { pattern, boost } of agencyKeywords) {
+    if (pattern.test(description)) total += boost;
+  }
+  return Math.min(total, 35);
 }
 
 function getRecencyBoost(createdAt: Date | string | undefined): number {
@@ -137,7 +169,7 @@ export function computeReportPriority(
 ): { score: number; level: PriorityLevel } {
   const serviceWeight = getServiceWeight(report.service_type || '');
   const statusWeight = getStatusWeight(report.status || '');
-  const descBoost = getDescriptionBoost(report.description || '');
+  const descBoost = getDescriptionBoost(report.description || '', report.service_type);
   const created = report.created_at || (report as any).createdAt;
   const recencyBoost = getRecencyBoost(created);
 

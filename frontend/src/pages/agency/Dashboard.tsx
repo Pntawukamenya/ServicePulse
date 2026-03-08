@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import { getServiceLabelKey } from '../../config/services';
+import { getServiceDisplayName } from '../../config/services';
 import { ServiceIconBadge } from '../../components/ServiceIcon';
 import { PriorityPill } from '../../components/PriorityPill';
 
@@ -130,7 +130,7 @@ export default function AgencyDashboard() {
       <h1 className="text-h1 mb-2">{t('agency.dashboard')}</h1>
 
       <p className="text-neutral-600 dark:text-neutral-400 mb-8">
-        {t('agency.welcome')}, {user?.fullName}
+        {t('agency.welcome')}, {user?.fullName?.trim().split(/\s+/)[0] ?? user?.fullName}
       </p>
 
       <div className="grid md:grid-cols-4 gap-6 mb-8">
@@ -167,8 +167,8 @@ export default function AgencyDashboard() {
                     <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <span className="block text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</span>
-                        <PriorityPill level={item.data.priority_level} />
+                        <span className="block text-sm font-medium truncate">{getServiceDisplayName(item.data.service_type, t)}</span>
+                        {item.data.status !== 'resolved' && <PriorityPill level={item.data.priority_level} />}
                       </div>
                       <span className="text-xs text-neutral-500">{formatDate(item.data.created_at)} · Report</span>
                     </div>
@@ -183,7 +183,7 @@ export default function AgencyDashboard() {
                     <ServiceIconBadge serviceCode={item.data.service_type} size="sm" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <p className="text-sm font-medium truncate">{getServiceLabelKey(item.data.service_type) ? t(getServiceLabelKey(item.data.service_type)!) : item.data.service_type}</p>
+                        <p className="text-sm font-medium truncate">{getServiceDisplayName(item.data.service_type, t)}</p>
                         <PriorityPill level={item.data.priority_level} />
                       </div>
                       <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{item.data.message}</p>

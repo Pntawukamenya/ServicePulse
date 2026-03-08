@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import api from '../lib/api';
 import { useTranslation } from '../i18n/useTranslation';
-import { getServiceLabelKey } from '../config/services';
+import { getServiceDisplayName } from '../config/services';
 import { ServiceIconBadge } from '../components/ServiceIcon';
 import { PriorityPill } from '../components/PriorityPill';
 import { useAuthStore } from '../store/authStore';
@@ -14,7 +14,8 @@ interface ReportData {
   sector?: string | null;
   cell?: string | null;
   description: string;
-  status: 'received' | 'submitted' | 'under_review' | 'assigned' | 'in_progress' | 'resolved' | 'rejected';
+  status: 'received' | 'submitted' | 'under_review' | 'assigned' | 'in_progress' | 'escalated' | 'resolved' | 'rejected';
+  assigned_to?: string | null;
   created_at: string;
   updated_at?: string;
   priority_level?: 'high' | 'medium' | 'low';
@@ -34,6 +35,8 @@ function ReportDetailPage() {
   const { pathname } = useLocation();
   const { t } = useTranslation();
   const { user } = useAuthStore();
+  const role = user?.role || '';
+  const isAgencyAdmin = ['agency_admin', 'super_admin', 'admin'].includes(role);
   const isAgency = pathname.includes('/agency/');
   const backHref = isAgency ? '/agency/reports' : '/citizen/reports';
   const backLabel = isAgency ? t('agency.viewReports') : t('citizen.viewAllReports');
@@ -41,6 +44,7 @@ function ReportDetailPage() {
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -56,13 +60,35 @@ function ReportDetailPage() {
 
   const updateStatus = async (newStatus: string) => {
     if (!id || !report) return;
+    setError('');
+    setSuccess('');
     setUpdating(true);
     try {
-      await api.put(`/reports/${id}/status`, { status: newStatus });
-      const res = await api.get(`/reports/${id}`);
-      setReport(res.data);
-    } catch (err) {
-      console.error(err);
+      const res = await api.put(`/reports/${id}/status`, { status: newStatus });
+      setReport({ ...res.data, users: res.data.users ?? report.users });
+      setSuccess(t('agency.statusUpdated'));
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      const message = err.response?.data?.error || err.message || 'Failed to update status';
+      setError(message);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleClaim = async () => {
+    if (!id || !report) return;
+    setError('');
+    setSuccess('');
+    setUpdating(true);
+    try {
+      const res = await api.post(`/reports/${id}/claim`);
+      setReport({ ...res.data, users: res.data.users ?? report.users });
+      setSuccess(t('agency.statusUpdated'));
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      const message = err.response?.data?.error || err.message || 'Failed to claim report';
+      setError(message);
     } finally {
       setUpdating(false);
     }
@@ -88,6 +114,7 @@ function ReportDetailPage() {
       under_review: 'Under Review',
       assigned: 'Assigned',
       in_progress: t('agency.inProgress'),
+      escalated: t('agency.escalated'),
       resolved: t('agency.resolved'),
       rejected: 'Rejected',
     };
@@ -99,13 +126,18 @@ function ReportDetailPage() {
       case 'resolved': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200';
       case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200';
       case 'in_progress': return 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200';
+      case 'escalated': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200';
       case 'under_review':
       case 'assigned': return 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200';
       default: return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200';
     }
   };
 
-  const allowedNext = report?.allowed_next_statuses?.length ? report.allowed_next_statuses : (report?.status === 'resolved' || report?.status === 'rejected' ? [] : ['in_progress', 'resolved']);
+  const isUnclaimed = report && (report.status === 'submitted' || report.status === 'received') && !report.assigned_to;
+  const isClaimedByMe = report && report.assigned_to === user?.id;
+  const isInProgressByMe = report?.status === 'in_progress' && isClaimedByMe;
+  const isEscalated = report?.status === 'escalated';
+  const canResolveEscalated = isEscalated && isAgencyAdmin;
 
   if (loading) {
     return (
@@ -133,13 +165,21 @@ function ReportDetailPage() {
     );
   }
 
-  const serviceLabel = getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : report.service_type;
-  const role = user?.role || '';
-  const isAgencyAdmin = ['agency_admin', 'super_admin', 'admin'].includes(role);
+  const serviceLabel = getServiceDisplayName(report.service_type, t);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-6">
+        {error && (
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-3 text-emerald-700 dark:text-emerald-300 text-sm">
+            {success}
+          </div>
+        )}
         {/* Header: ID, service, status, priority */}
         <div className="rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-sm overflow-hidden">
           <div className="p-6 sm:p-8">
@@ -154,31 +194,40 @@ function ReportDetailPage() {
                     {serviceLabel}
                   </h1>
                   <div className="flex flex-wrap items-center gap-3 mt-3">
-                    {isAgencyAdmin || !isAgency ? (
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getStatusBadgeClass(report.status)}`}>
-                        {getStatusLabel(report.status)}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
-                        {t('citizen.pending')}
-                      </span>
+                    <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${getStatusBadgeClass(report.status)}`}>
+                      {getStatusLabel(report.status)}
+                    </span>
+                    {report.status !== 'resolved' && (
+                      <PriorityPill level={report.priority_level} className="text-[11px]" />
                     )}
-                    <PriorityPill level={report.priority_level} className="text-[11px]" />
                   </div>
                 </div>
               </div>
               {isAgency && (
                 <div className="flex flex-wrap gap-2">
-                  {allowedNext.map((nextStatus) => (
-                    <button
-                      key={nextStatus}
-                      onClick={() => updateStatus(nextStatus)}
-                      disabled={updating}
-                      className={nextStatus === 'resolved' ? 'btn btn-primary text-sm' : 'btn btn-outline text-sm'}
-                    >
-                      {nextStatus === 'resolved' ? t('agency.markResolved') : nextStatus === 'rejected' ? 'Reject' : getStatusLabel(nextStatus)}
+                  {isUnclaimed && (
+                    <button onClick={handleClaim} disabled={updating} className="btn btn-primary text-sm">
+                      {t('agency.claim')}
                     </button>
-                  ))}
+                  )}
+                  {isInProgressByMe && (
+                    <>
+                      <button onClick={() => updateStatus('resolved')} disabled={updating} className="btn btn-primary text-sm">
+                        {t('agency.markResolved')}
+                      </button>
+                      <button onClick={() => updateStatus('escalated')} disabled={updating} className="btn btn-outline text-sm">
+                        {t('agency.escalate')}
+                      </button>
+                    </>
+                  )}
+                  {canResolveEscalated && (
+                    <button onClick={() => updateStatus('resolved')} disabled={updating} className="btn btn-primary text-sm">
+                      {t('agency.markResolved')}
+                    </button>
+                  )}
+                  {report?.status === 'in_progress' && !isClaimedByMe && (
+                    <span className="text-sm text-neutral-500 dark:text-neutral-400">{t('agency.inProgressByColleague')}</span>
+                  )}
                 </div>
               )}
             </div>

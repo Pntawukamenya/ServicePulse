@@ -5,9 +5,12 @@ import { logError } from '../utils/logger';
 
 export const listPending = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const agencyCode = req.userAgencyCode;
+    // Super_admin without agency can pass ?agencyCode=REG (or WASAC, EMERGENCY) to list that agency's pending users
+    const agencyCode =
+      req.userAgencyCode ||
+      (req.userRole === 'super_admin' ? (req.query.agencyCode as string)?.trim()?.toUpperCase() : undefined);
     if (!agencyCode) {
-      res.status(403).json({ error: 'Agency admin access required' });
+      res.status(403).json({ error: 'Agency admin access required. Super admin can use ?agencyCode=REG (or WASAC, EMERGENCY).' });
       return;
     }
 
@@ -21,11 +24,16 @@ export const listPending = async (req: AuthRequest, res: Response): Promise<void
 
 export const approve = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const agencyCode = req.userAgencyCode;
     const userId = req.params.userId;
+    // Super_admin without agency can pass agencyCode in body or query to approve for that agency
+    const agencyCode =
+      req.userAgencyCode ||
+      (req.userRole === 'super_admin'
+        ? ((req.body?.agencyCode ?? req.query?.agencyCode) as string)?.trim()?.toUpperCase()
+        : undefined);
 
     if (!agencyCode || !req.userId) {
-      res.status(403).json({ error: 'Agency admin access required' });
+      res.status(403).json({ error: 'Agency admin access required. Super admin can pass agencyCode in body or query.' });
       return;
     }
 

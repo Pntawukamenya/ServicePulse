@@ -2,8 +2,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
-import { getServiceLabelKey } from '../../config/services';
+import { getServiceDisplayName } from '../../config/services';
 import ReportCard from '../../components/ReportCard';
+import Pagination, { DEFAULT_PAGE_SIZE } from '../../components/Pagination';
 
 interface Report {
   id: string;
@@ -22,6 +23,7 @@ export default function CitizenReports() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'status'>('newest');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Refetch when on reports list so list stays in sync with DB (e.g. when navigating back from report detail)
   useEffect(() => {
@@ -58,6 +60,16 @@ export default function CitizenReports() {
     });
     return list;
   }, [reports, search, sortBy]);
+
+  const pageSize = DEFAULT_PAGE_SIZE;
+  const paginatedReports = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredAndSorted.slice(start, start + pageSize);
+  }, [filteredAndSorted, currentPage, pageSize]);
+  const totalPages = Math.max(1, Math.ceil(filteredAndSorted.length / pageSize));
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
+  }, [currentPage, totalPages]);
 
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
@@ -138,15 +150,16 @@ export default function CitizenReports() {
           <button onClick={() => setSearch('')} className="btn btn-outline">Clear search</button>
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-stagger">
-          {filteredAndSorted.map((report) => (
+          {paginatedReports.map((report) => (
             <ReportCard
               key={report.id}
               compact
               to={`/citizen/reports/${report.id}`}
               id={report.id}
               serviceType={report.service_type}
-              displayLabel={getServiceLabelKey(report.service_type) ? t(getServiceLabelKey(report.service_type)!) : undefined}
+              displayLabel={getServiceDisplayName(report.service_type, t)}
               location={report.location}
               description={report.description}
               status={report.status}
@@ -160,6 +173,15 @@ export default function CitizenReports() {
             />
           ))}
         </div>
+        <div className="mt-8">
+          <Pagination
+            totalItems={filteredAndSorted.length}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            pageSize={pageSize}
+          />
+        </div>
+        </>
       )}
     </div>
   );

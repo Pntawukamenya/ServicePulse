@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useAuthStore } from '../../store/authStore';
+import { getServiceLabelKey } from '../../config/services';
+
+type AgencyFilter = '' | 'REG' | 'WASAC' | 'EMERGENCY';
+const AGENCY_OPTIONS: { value: AgencyFilter; label: string }[] = [
+  { value: '', label: 'All' },
+  { value: 'REG', label: 'REG' },
+  { value: 'WASAC', label: 'WASAC' },
+  { value: 'EMERGENCY', label: 'EMERGENCY' },
+];
 import {
   BarChart,
   Bar,
@@ -27,27 +37,41 @@ interface ReportAnalytics {
   criticalOverdueCount: number;
 }
 
+// Stable priority order and colors: Urgent → Priority → Standard → Routine
+const PRIORITY_ORDER = ['critical', 'high', 'medium', 'low'] as const;
 const PRIORITY_COLORS: Record<string, string> = {
-  low: '#94a3b8',
-  medium: '#3b82f6',
-  high: '#f59e0b',
-  critical: '#ef4444',
+  critical: '#ef4444', // Urgent – Red
+  high: '#f97316',     // Priority – Orange
+  medium: '#8b5cf6',  // Standard – Purple
+  low: '#38bdf8',      // Routine – Light blue
+};
+
+const PRIORITY_I18N_KEYS: Record<string, string> = {
+  critical: 'citizen.priorityCritical', // Urgent
+  high: 'citizen.priorityHigh',          // Priority
+  medium: 'citizen.priorityMedium',      // Standard
+  low: 'citizen.priorityLow',           // Routine
 };
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316'];
 
 export default function AgencyAnalytics() {
   const { t } = useTranslation();
+  const { user } = useAuthStore();
+  const isSuperAdminNoAgency = user?.role === 'super_admin' && !user?.agencyCode;
+  const [agencyFilter, setAgencyFilter] = useState<AgencyFilter>('');
   const [data, setData] = useState<ReportAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/analytics/reports')
+    const params = isSuperAdminNoAgency && agencyFilter ? { agency: agencyFilter } : {};
+    setLoading(true);
+    api.get('/analytics/reports', { params })
       .then((res) => setData(res.data))
       .catch(() => setError('Failed to load analytics'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isSuperAdminNoAgency, agencyFilter]);
 
   if (loading) {
     return (
@@ -80,16 +104,27 @@ export default function AgencyAnalytics() {
     { name: 'Pending', value: 100 - resolutionPct, fill: '#94a3b8' },
   ].filter((d) => d.value > 0);
 
-  const categoryChartData = data.totalByCategory.slice(0, 10).map((r) => ({
-    name: r.service_type.length > 18 ? r.service_type.slice(0, 18) + '…' : r.service_type,
-    fullName: r.service_type,
-    count: r.count,
-  }));
+  const getCategoryDisplayName = (serviceType: string) => {
+    const key = getServiceLabelKey(serviceType);
+    if (key) return t(key);
+    return serviceType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+  const categoryChartData = data.totalByCategory.slice(0, 10).map((r) => {
+    const displayName = getCategoryDisplayName(r.service_type);
+    return {
+      name: displayName.length > 18 ? displayName.slice(0, 18) + '…' : displayName,
+      fullName: displayName,
+      count: r.count,
+    };
+  });
 
-  const priorityChartData = data.priorityDistribution.map((r) => ({
-    name: r.priority.charAt(0).toUpperCase() + r.priority.slice(1),
+  const sortedPriorityDistribution = [...data.priorityDistribution].sort(
+    (a, b) => PRIORITY_ORDER.indexOf(a.priority as typeof PRIORITY_ORDER[number]) - PRIORITY_ORDER.indexOf(b.priority as typeof PRIORITY_ORDER[number])
+  );
+  const priorityChartData = sortedPriorityDistribution.map((r) => ({
+    name: t(PRIORITY_I18N_KEYS[r.priority] || r.priority),
     value: r.count,
-    fill: PRIORITY_COLORS[r.priority] || CHART_COLORS[data.priorityDistribution.indexOf(r) % CHART_COLORS.length],
+    fill: PRIORITY_COLORS[r.priority] ?? CHART_COLORS[data.priorityDistribution.indexOf(r) % CHART_COLORS.length],
   }));
 
   const monthlyChartData = data.monthlyTrends.slice(-12).map((r) => ({
@@ -113,8 +148,30 @@ export default function AgencyAnalytics() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">{t('nav.analytics')}</h1>
-      <p className="text-neutral-600 dark:text-neutral-400 mb-8">Report insights and performance metrics</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">{t('nav.analytics')}</h1>
+          <p className="text-neutral-600 dark:text-neutral-400">Report insights and performance metrics</p>
+        </div>
+        {isSuperAdminNoAgency && (
+          <div className="flex items-center gap-2">
+            <label htmlFor="analytics-agency" className="text-sm font-medium text-neutral-700 dark:text-neutral-300 whitespace-nowrap">
+              Agency:
+            </label>
+            <select
+              id="analytics-agency"
+              value={agencyFilter}
+              onChange={(e) => setAgencyFilter(e.target.value as AgencyFilter)}
+              className="input select w-auto min-w-[8rem]"
+            >
+              {AGENCY_OPTIONS.map((opt) => (
+                <option key={opt.value || 'all'} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+      <div className="mb-8" />
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
@@ -150,7 +207,7 @@ export default function AgencyAnalytics() {
             <ul className="space-y-2">
               {data.totalByCategory.slice(0, 10).map((row) => (
                 <li key={row.service_type} className="flex justify-between items-center py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                  <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{row.service_type}</span>
+                  <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 truncate">{getCategoryDisplayName(row.service_type)}</span>
                   <span className="text-sm font-bold text-primary-600 dark:text-primary-400">{row.count}</span>
                 </li>
               ))}
@@ -164,9 +221,9 @@ export default function AgencyAnalytics() {
             <p className="text-sm text-neutral-500">No data</p>
           ) : (
             <ul className="space-y-2">
-              {data.priorityDistribution.map((row) => (
+              {sortedPriorityDistribution.map((row) => (
                 <li key={row.priority} className="flex justify-between items-center py-2 border-b border-neutral-100 dark:border-neutral-800 last:border-0">
-                  <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200 capitalize">{row.priority}</span>
+                  <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{t(PRIORITY_I18N_KEYS[row.priority] || row.priority)}</span>
                   <span className="text-sm font-bold text-neutral-600 dark:text-neutral-300">{row.count}</span>
                 </li>
               ))}

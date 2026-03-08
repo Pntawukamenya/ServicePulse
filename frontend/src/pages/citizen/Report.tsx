@@ -25,8 +25,6 @@ interface ReportForm {
   cell: string;
   village: string;
   description: string;
-  priority: 'low' | 'medium' | 'high' | 'critical' | '';
-  address: string;
 }
 
 interface AttachmentMeta {
@@ -43,7 +41,7 @@ export default function CitizenReport() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ReportForm>({
-    defaultValues: { agency: '', district: '', sector: '', cell: '', village: '', priority: 'medium', address: '' },
+    defaultValues: { agency: '', district: '', sector: '', cell: '', village: '' },
     mode: 'onBlur',
   });
 
@@ -120,11 +118,9 @@ export default function CitizenReport() {
     setLoading(true);
 
     try {
-      const { agency: _, district: d, sector: s, cell: c, village: v, priority, address, ...rest } = data;
+      const { agency: _, district: d, sector: s, cell: c, village: v, ...rest } = data;
       const location = formatLocation(d, s, c, v);
       const payload: Record<string, unknown> = { ...rest, location, sector: s || undefined, cell: c || undefined };
-      if (priority && priority !== 'medium') payload.priority = priority;
-      if (address?.trim()) payload.address = address.trim();
       if (latitude != null && longitude != null) {
         payload.latitude = latitude;
         payload.longitude = longitude;
@@ -210,25 +206,6 @@ export default function CitizenReport() {
             districtError={errors.district?.message}
             sectorError={errors.sector?.message}
           />
-
-          <div>
-            <label htmlFor="priority" className="block text-sm font-medium mb-1">
-              {t('citizen.priority')} ({t('citizen.priorityOptional')})
-            </label>
-            <select id="priority" {...register('priority')} className="input select">
-              <option value="medium">{t('citizen.priorityMedium')}</option>
-              <option value="low">{t('citizen.priorityLow')}</option>
-              <option value="high">{t('citizen.priorityHigh')}</option>
-              <option value="critical">{t('citizen.priorityCritical')}</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium mb-1">
-              {t('citizen.address')}
-            </label>
-            <input id="address" type="text" {...register('address')} className="input" placeholder="" />
-          </div>
 
           <div>
             <p className="block text-sm font-medium mb-1">Location (GPS)</p>

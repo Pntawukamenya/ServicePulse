@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-/** Status lifecycle: submitted → under_review → assigned → in_progress → resolved | rejected. 'received' kept for legacy. */
-const REPORT_STATUS_ENUM = ['submitted', 'received', 'under_review', 'assigned', 'in_progress', 'resolved', 'rejected'];
+/** Status lifecycle: submitted → (claim) → in_progress → resolved | escalated. Escalated only visible to agency_admin. 'received' kept for legacy. */
+const REPORT_STATUS_ENUM = ['submitted', 'received', 'under_review', 'assigned', 'in_progress', 'escalated', 'resolved', 'rejected'];
 
 const PRIORITY_ENUM = ['low', 'medium', 'high', 'critical'];
 

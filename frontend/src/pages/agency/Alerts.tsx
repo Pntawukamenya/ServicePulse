@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAuthStore } from '../../store/authStore';
-import { getServicesByAgency, getServiceLabelKey } from '../../config/services';
+import { getServicesByAgency, getServiceDisplayName, getServiceLabelKey } from '../../config/services';
 import type { AgencyCode } from '../../config/services';
 import DistrictSectorSelect, { formatLocation } from '../../components/DistrictSectorSelect';
 import AlertCard from '../../components/AlertCard';
+import Pagination, { DEFAULT_PAGE_SIZE } from '../../components/Pagination';
+
+const AGENCY_CODES: AgencyCode[] = ['REG', 'WASAC', 'EMERGENCY'];
 
 interface AlertForm {
+  agencyCode?: string;
   serviceType: string;
   district: string;
   sector: string;
@@ -35,13 +39,15 @@ export default function AgencyAlerts() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { user } = useAuthStore();
-  const agencyServices = getServicesByAgency((user?.agencyCode as AgencyCode) || 'REG');
+  const isSuperAdminNoAgency = user?.role === 'super_admin' && !user?.agencyCode;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [alertsPage, setAlertsPage] = useState(1);
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<AlertForm>({
     defaultValues: {
+      agencyCode: isSuperAdminNoAgency ? 'REG' : undefined,
       targetAudience: 'all',
       district: '',
       sector: '',
@@ -49,6 +55,9 @@ export default function AgencyAlerts() {
       village: '',
     },
   });
+  const formAgencyCode = watch('agencyCode') as AgencyCode | undefined;
+  const effectiveAgencyCode = (user?.agencyCode as AgencyCode) || formAgencyCode || 'REG';
+  const agencyServices = getServicesByAgency(effectiveAgencyCode);
 
   const targetAudience = watch('targetAudience');
   const district = watch('district');
@@ -60,6 +69,10 @@ export default function AgencyAlerts() {
     if (pathname !== '/agency/alerts') return;
     fetchNotifications();
   }, [pathname]);
+
+  useEffect(() => {
+    if (isSuperAdminNoAgency) setValue('agencyCode', 'REG');
+  }, [isSuperAdminNoAgency, setValue]);
 
   const fetchNotifications = async () => {
     try {
@@ -79,14 +92,27 @@ export default function AgencyAlerts() {
       const location = data.targetAudience === 'location_based' && data.district && data.sector
         ? formatLocation(data.district, data.sector, data.cell, data.village)
         : undefined;
-      await api.post('/notifications', {
+      const body: Record<string, unknown> = {
         serviceType: data.serviceType,
         location,
         message: data.message,
         targetAudience: data.targetAudience,
-      });
+      };
+      if (isSuperAdminNoAgency && data.agencyCode) {
+        body.agencyCode = data.agencyCode;
+      }
+      await api.post('/notifications', body);
       setSuccess(t('agency.alertSuccess'));
-      reset({ serviceType: '', district: '', sector: '', cell: '', village: '', message: '', targetAudience: 'all' });
+      reset({
+        agencyCode: isSuperAdminNoAgency ? 'REG' : undefined,
+        serviceType: '',
+        district: '',
+        sector: '',
+        cell: '',
+        village: '',
+        message: '',
+        targetAudience: 'all',
+      });
       fetchNotifications();
     } catch (err: any) {
       setError(err.response?.data?.error || t('agency.alertFailed'));
@@ -94,6 +120,17 @@ export default function AgencyAlerts() {
       setLoading(false);
     }
   };
+
+  const alertsPageSize = DEFAULT_PAGE_SIZE;
+  // API returns alerts already sorted by priority (prioritizeNotifications); we only slice for pagination.
+  const paginatedAlerts = useMemo(() => {
+    const start = (alertsPage - 1) * alertsPageSize;
+    return notifications.slice(start, start + alertsPageSize);
+  }, [notifications, alertsPage, alertsPageSize]);
+  const alertsTotalPages = Math.max(1, Math.ceil(notifications.length / alertsPageSize));
+  useEffect(() => {
+    if (alertsPage > alertsTotalPages && alertsTotalPages > 0) setAlertsPage(1);
+  }, [alertsPage, alertsTotalPages]);
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '—';
@@ -116,43 +153,6 @@ export default function AgencyAlerts() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">{t('agency.recentAlerts')}</h2>
-          <div className="space-y-4">
-            {notifications.length === 0 ? (
-              <div className="card text-center py-12 px-6 border border-neutral-200 dark:border-neutral-700">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                </div>
-                <p className="text-neutral-600 dark:text-neutral-400">{t('agency.noAlerts')}</p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-500 mt-1">Create your first alert to notify citizens</p>
-              </div>
-            ) : (
-              <div className="space-y-4 animate-stagger">
-                {notifications.slice(0, 5).map((notification) => (
-                  <AlertCard
-                    key={notification.id}
-                    id={notification.id}
-                    serviceType={notification.service_type}
-                    displayLabel={getServiceLabelKey(notification.service_type) ? t(getServiceLabelKey(notification.service_type)!) : undefined}
-                    message={notification.message}
-                    targetAudience={notification.target_audience}
-                    targetLabel={t('agency.target')}
-                    targetValue={notification.target_audience === 'all' ? t('agency.all') : (notification.location || '—')}
-                    deliveryCount={notification.delivery_count}
-                    totalRecipients={notification.total_recipients}
-                    deliveredLabel={t('agency.delivered')}
-                    formatDate={formatDate}
-                    created_at={notification.created_at}
-                    createdAt={notification.createdAt}
-                    priority_level={(notification as any).priority_level}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
         <div className="card self-start">
           <h2 className="text-xl font-semibold mb-4">{t('agency.newAlert')}</h2>
 
@@ -165,6 +165,25 @@ export default function AgencyAlerts() {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {isSuperAdminNoAgency && (
+              <div>
+                <label htmlFor="agencyCode" className="block text-sm font-medium mb-1">
+                  Agency *
+                </label>
+                <select
+                  id="agencyCode"
+                  {...register('agencyCode', { required: 'Select an agency' })}
+                  className="input select"
+                >
+                  {AGENCY_CODES.map((code) => (
+                    <option key={code} value={code}>{code}</option>
+                  ))}
+                </select>
+                {errors.agencyCode && (
+                  <p className="mt-1 text-sm text-error-600 dark:text-error-400">{errors.agencyCode.message}</p>
+                )}
+              </div>
+            )}
             <div>
               <label htmlFor="serviceType" className="block text-sm font-medium mb-1">
                 {t('citizen.serviceType')} *
@@ -248,6 +267,55 @@ export default function AgencyAlerts() {
               {loading ? t('agency.sending') : t('agency.sendAlert')}
             </button>
           </form>
+        </div>
+
+        <div>
+          <h2 className="text-xl font-semibold mb-4">{t('agency.recentAlerts')}</h2>
+          <div className="space-y-4">
+            {notifications.length === 0 ? (
+              <div className="card text-center py-12 px-6 border border-neutral-200 dark:border-neutral-700">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                </div>
+                <p className="text-neutral-600 dark:text-neutral-400">{t('agency.noAlerts')}</p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-500 mt-1">Create your first alert to notify citizens</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4 animate-stagger">
+                  {paginatedAlerts.map((notification) => (
+                    <AlertCard
+                      key={notification.id}
+                      id={notification.id}
+                      serviceType={notification.service_type}
+                      displayLabel={getServiceDisplayName(notification.service_type, t)}
+                      message={notification.message}
+                      targetAudience={notification.target_audience}
+                      targetLabel={t('agency.target')}
+                      targetValue={notification.target_audience === 'all' ? t('agency.all') : (notification.location || '—')}
+                      deliveryCount={notification.delivery_count}
+                      totalRecipients={notification.total_recipients}
+                      deliveredLabel={t('agency.delivered')}
+                      formatDate={formatDate}
+                      created_at={notification.created_at}
+                      createdAt={notification.createdAt}
+                      priority_level={(notification as any).priority_level}
+                    />
+                  ))}
+                </div>
+                {notifications.length > 0 && (
+                  <div className="mt-6">
+                    <Pagination
+                      totalItems={notifications.length}
+                      currentPage={alertsPage}
+                      onPageChange={setAlertsPage}
+                      pageSize={alertsPageSize}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

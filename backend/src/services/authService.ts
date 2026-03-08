@@ -6,6 +6,7 @@ import PasswordResetOtp from '../models/PasswordResetOtp';
 import { generateToken } from '../utils/jwt';
 import { sendSMS } from '../config/sms';
 import { sendEmail } from '../config/email';
+import { getAgencyByCode } from './agencyService';
 
 export type IdentifierType = 'email' | 'phone';
 export type UserRole = 'citizen' | 'agency_employee' | 'agency_admin' | 'super_admin' | 'agency' | 'admin';
@@ -123,6 +124,13 @@ export async function registerUser(data: RegisterData) {
     throw new Error(identifierType === 'email' ? 'User with this email already exists' : 'User with this phone number already exists');
   }
 
+  if (role === 'agency_employee' && agencyCode?.trim()) {
+    const agency = await getAgencyByCode(agencyCode.trim());
+    if (!agency) {
+      throw new Error('Invalid agency code. Please choose a valid agency (e.g. REG, WASAC, EMERGENCY).');
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   const status = role === 'citizen' ? 'pending_otp' : 'pending_approval';
   let location: string | null = null;
@@ -141,7 +149,7 @@ export async function registerUser(data: RegisterData) {
     location,
     identifier_type: identifierType,
     role,
-    agency_code: agencyCode || null,
+    agency_code: agencyCode?.trim() || null,
     agency_role: role === 'agency_employee' && agencyRole ? agencyRole.trim() : null,
     status,
     terms_accepted: true,
@@ -211,7 +219,7 @@ export async function verifyOtpAndLogin(data: VerifyOtpData) {
   const user = await User.findOneAndUpdate(
     identifierType === 'email' ? { email: lookupId } : { phone_number: lookupId },
     { $set: { status: 'active' } },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (!user) {

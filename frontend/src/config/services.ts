@@ -70,3 +70,10 @@ export function getServiceLabelKey(serviceCode: string): string | null {
   const service = ALL_SERVICES.find((s) => s.code === serviceCode);
   return service?.labelKey ?? null;
 }
+
+/** User-facing display name: translated label or formatted code (no underscores). */
+export function getServiceDisplayName(serviceCode: string, t: (key: string) => string): string {
+  const key = getServiceLabelKey(serviceCode);
+  if (key) return t(key);
+  return (serviceCode || '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}

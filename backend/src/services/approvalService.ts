@@ -31,7 +31,7 @@ export async function approveUser(userId: string, approverId: string, agencyCode
   };
   if (agency) updates.agency_id = agency._id;
 
-  const updated = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true }).lean();
+  const updated = await User.findByIdAndUpdate(userId, { $set: updates }, { returnDocument: 'after' }).lean();
 
   if (!updated) throw new Error('Failed to approve user');
   return {
