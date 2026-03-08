@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useAuthStore } from '../../store/authStore';
-import { getServicesByAgency, getServiceDisplayName, getServiceLabelKey } from '../../config/services';
+import { getServicesByAgency, getServiceDisplayName } from '../../config/services';
 import type { AgencyCode } from '../../config/services';
 import DistrictSectorSelect, { formatLocation } from '../../components/DistrictSectorSelect';
 import AlertCard from '../../components/AlertCard';
