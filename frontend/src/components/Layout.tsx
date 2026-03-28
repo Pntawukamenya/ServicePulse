@@ -23,6 +23,13 @@ export default function Layout({ children }: LayoutProps) {
     navigate('/login');
   };
 
+  /** Home always clears the session so returning to dashboards requires a fresh login. */
+  const goHomeAndLogout = () => {
+    logout();
+    navigate('/');
+    setMobileMenuOpen(false);
+  };
+
   const isCitizenDashboard = location.pathname.startsWith('/citizen/');
   const isAgencyDashboard = location.pathname.startsWith('/agency/');
   const isNotificationsPage = location.pathname === '/notifications';
@@ -123,9 +130,19 @@ export default function Layout({ children }: LayoutProps) {
         <div className="container-main">
           <div className="flex justify-between items-center h-16 sm:h-[4.25rem]">
             <div className="flex items-center gap-4 sm:gap-8">
-              <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-400 transition-colors hover:text-primary-700 dark:hover:text-primary-300">
-                ServicePulse
-              </Link>
+              {isAuthenticated() ? (
+                <button
+                  type="button"
+                  onClick={goHomeAndLogout}
+                  className="text-xl font-bold text-primary-600 dark:text-primary-400 transition-colors hover:text-primary-700 dark:hover:text-primary-300 text-left"
+                >
+                  ServicePulse
+                </button>
+              ) : (
+                <Link to="/" className="text-xl font-bold text-primary-600 dark:text-primary-400 transition-colors hover:text-primary-700 dark:hover:text-primary-300">
+                  ServicePulse
+                </Link>
+              )}
               {isAuthenticated() && (
                 <div className="hidden md:flex items-center gap-1">
                   {isCitizen() && (
@@ -175,12 +192,13 @@ export default function Layout({ children }: LayoutProps) {
               )}
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
-              <Link
-                to="/"
+              <button
+                type="button"
+                onClick={goHomeAndLogout}
                 className="hidden sm:inline-flex px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors"
               >
                 {t('nav.home')}
-              </Link>
+              </button>
               <button
                 onClick={toggleTheme}
                 className="p-2.5 rounded-xl text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200"
@@ -289,9 +307,13 @@ export default function Layout({ children }: LayoutProps) {
                       </Link>
                     </>
                   )}
-                <Link to="/" onClick={() => setMobileMenuOpen(false)} className="px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                <button
+                  type="button"
+                  onClick={goHomeAndLogout}
+                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                >
                   {t('nav.home')}
-                </Link>
+                </button>
               </div>
             </div>
           )}

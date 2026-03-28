@@ -110,6 +110,13 @@ export default function DashboardLayout({ children, navItems, roleLabel }: Dashb
     navigate('/login');
   };
 
+  /** Home clears session so the public landing page is shown and dashboards require login again. */
+  const goHomeAndLogout = () => {
+    logout();
+    navigate('/');
+    setSidebarOpen(false);
+  };
+
   const baseNav = 'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200';
 
   return (
@@ -121,14 +128,14 @@ export default function DashboardLayout({ children, navItems, roleLabel }: Dashb
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         <div className="p-6 border-b border-neutral-100 dark:border-neutral-800">
-          <Link to="/" className="block">
+          <button type="button" onClick={goHomeAndLogout} className="block w-full text-left">
             <span className="text-xl font-bold text-primary-600 dark:text-primary-400">
               ServicePulse
             </span>
             <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mt-1">
               {roleLabel}
             </p>
-          </Link>
+          </button>
         </div>
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
@@ -148,16 +155,16 @@ export default function DashboardLayout({ children, navItems, roleLabel }: Dashb
           ))}
         </nav>
         <div className="p-4 border-t border-neutral-100 dark:border-neutral-800">
-          <Link
-            to="/"
-            onClick={() => setSidebarOpen(false)}
-            className={`${baseNav} text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800`}
+          <button
+            type="button"
+            onClick={goHomeAndLogout}
+            className={`${baseNav} w-full text-left text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             {t('nav.home')}
-          </Link>
+          </button>
         </div>
       </aside>
 
