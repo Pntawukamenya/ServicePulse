@@ -24,6 +24,7 @@
 - [Deployment](#deployment)
 - [Roles & access](#roles--access)
 - [Security](#security)
+- [Automated testing](#automated-testing)
 - [For evaluators / supervisors](#for-evaluators--supervisors)
 - [License](#license)
 
@@ -91,6 +92,7 @@ The codebase is a monorepo: **frontend** (React + Vite) and **backend** (Node.js
 
 ```
 ServicePulse/
+├── package.json             # Root scripts: npm test, test:unit, test:integration, test:validation
 ├── backend/                 # Node.js + Express API
 │   ├── src/
 │   │   ├── config/         # Database, SMS, email, USSD config
@@ -101,6 +103,7 @@ ServicePulse/
 │   │   ├── services/      # Business logic
 │   │   ├── utils/        # JWT, logger
 │   │   ├── scripts/      # Seed, migrations
+│   │   ├── test/         # Test env (e.g. JWT for Vitest)
 │   │   └── server.ts     # Entry point
 │   ├── .env.example      # Example environment variables
 │   └── package.json
@@ -112,6 +115,7 @@ ServicePulse/
 │   │   ├── store/        # Zustand (auth, theme, language)
 │   │   ├── i18n/         # Translations (en, rw, fr)
 │   │   ├── config/       # Services, app config
+│   │   ├── test/         # Vitest setup, integration/validation smoke tests
 │   │   └── App.tsx
 │   └── package.json
 └── README.md
@@ -339,10 +343,60 @@ Agency users must be associated with an agency (REG, WASAC, or Emergency) via `a
 
 ---
 
+## Automated testing
+
+The project uses **Vitest** for automated tests, split into **unit**, **integration**, and **validation** layers. This supports regression safety, confident refactoring, and clear evidence for academic or supervisor review.
+
+### Running tests
+
+From the **repository root** (runs backend, then frontend):
+
+```bash
+npm test
+```
+
+Run a single app:
+
+```bash
+npm run test:backend    # backend only
+npm run test:frontend   # frontend only
+```
+
+Run **all unit tests** in both apps, or **integration** / **validation** tiers across both:
+
+```bash
+npm run test:unit
+npm run test:integration
+npm run test:validation
+```
+
+From inside `backend/` or `frontend/`, use the same `test`, `test:unit`, `test:integration`, and `test:validation` scripts defined in that package’s `package.json`.
+
+### What each tier covers
+
+| Tier | Backend (from `backend/`) | Frontend (from `frontend/`) |
+|------|-----------------------------|-------------------------------|
+| **Unit** | `npm run test:unit` — workflow rules, JWT, service catalog, prioritization, analytics query helpers, middleware (`requireRole`, error handling), agency service with mocked Mongoose | `npm run test:unit` — config helpers, Zustand auth store, Axios client defaults, UI components (React Testing Library) |
+| **Integration** | `npm run test:integration` — HTTP + Express (`/health`, 404) via Supertest | `npm run test:integration` — Vitest + jsdom stack smoke |
+| **Validation** | `npm run test:validation` — `express-validator` on `/api/auth/*` (e.g. login body) | `npm run test:validation` — form-style string rules (e.g. min length / trim) |
+
+### File naming conventions
+
+| Pattern | Purpose |
+|---------|---------|
+| `*.unit.test.ts` / `*.unit.test.tsx` | Unit tests |
+| `*.integration.test.ts` | Integration tests |
+| `*.validation.test.ts` | Validation / API contract tests |
+
+Backend tests expect a valid **`JWT_SECRET`** for modules that load JWT configuration; local and CI runs use `backend/src/test/setupEnv.ts` so tests can run without extra manual env setup.
+
+---
+
 ## For evaluators / supervisors
 
 This section summarizes what is implemented for grading and demo.
 
+- **Automated testing:** Vitest suites for unit, integration, and validation layers; see [Automated testing](#automated-testing) for commands and scope.
 - **Full-stack application:** React frontend (Vite) + Node/Express backend (TypeScript), MongoDB, JWT auth.
 - **User flows:** Registration (citizen/agency), login, profile, password reset (OTP), report creation and tracking, agency report management and status updates.
 - **Features:** Reports (CRUD, status workflow), notifications (SMS alerts via Twilio when configured), analytics dashboard (resolution rate, trends, by category/priority), approvals (if enabled), map/clusters.

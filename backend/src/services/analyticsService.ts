@@ -12,7 +12,8 @@ export interface ReportAnalytics {
   criticalOverdueCount: number;
 }
 
-function getMatchForAgency(agencyCode: string | null): Record<string, unknown> {
+/** MongoDB $match fragment for agency-scoped report queries (exported for unit tests). */
+export function getMatchForAgency(agencyCode: string | null): Record<string, unknown> {
   if (!agencyCode) return {};
   return {
     $or: [
