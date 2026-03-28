@@ -201,6 +201,7 @@ Frontend runs at **http://localhost:3000**. Use the app to register (citizen or 
 | `JWT_SECRET` | Yes | Secret for signing JWTs (use a long random string) |
 | `FRONTEND_URL` | Yes (for CORS) | Frontend origin (e.g. `http://localhost:3000` or `https://your-app.vercel.app`) |
 | `JWT_EXPIRES_IN` | No | Token expiry (default: `7d`) |
+| `AUTH_RATE_LIMIT_MAX` | No | Max requests per IP per 15 minutes for `/api/auth/*` (default: `200`) |
 | `PORT` | No | Server port (default: `5000`; Render sets this automatically) |
 | `TWILIO_ACCOUNT_SID` | No | Twilio SID (SMS) |
 | `TWILIO_AUTH_TOKEN` | No | Twilio auth token |
@@ -340,6 +341,21 @@ Agency users must be associated with an agency (REG, WASAC, or Emergency) via `a
 - **Input validation:** express-validator on backend; React Hook Form on frontend.
 - **CORS:** Backend allows only `FRONTEND_URL` in production.
 - **Role-based routes:** Middleware restricts endpoints by user role.
+- **HTTP hardening (backend):** [Helmet](https://helmetjs.github.io/) sets secure headers; JSON/urlencoded bodies are capped at **1mb**; **`trust proxy`** is enabled so client IPs are correct behind Render/Vercel-style reverse proxies (needed for rate limiting and logs).
+- **Rate limiting:** `/api/auth/*` routes are limited (default **200 requests / 15 minutes** per IP). Override with `AUTH_RATE_LIMIT_MAX` if your deployment needs a different ceiling.
+
+### Dependency advisories (npm audit / Render build scans)
+
+`npm audit` on the backend previously reported **four** issues (**two high**, **two low**) from transitive dependencies used by Express, Twilio, and Nodemailer. They are addressed as follows:
+
+| Severity | Package / advisory theme | Mitigation |
+|----------|---------------------------|------------|
+| **High** | **axios** (Twilio) — denial of service via `mergeConfig` / `__proto__` ([GHSA-43fc-jf86-j433](https://github.com/advisories/GHSA-43fc-jf86-j433)) | Resolved by upgrading the locked **axios** tree to a fixed release; **`overrides`** in `backend/package.json` keep **axios ≥ 1.14.0** on future installs. |
+| **High** | **path-to-regexp** (Express router) — ReDoS with complex route parameters ([GHSA-37ch-88jc-xwx2](https://github.com/advisories/GHSA-37ch-88jc-xwx2)) | Resolved by Express/npm resolution to **path-to-regexp ≥ 0.1.13**; enforced via **`overrides`**. |
+| **Low** | **qs** (body-parser / Express) — `arrayLimit` / comma parsing DoS ([GHSA-w7fw-mjwx-w883](https://github.com/advisories/GHSA-w7fw-mjwx-w883)) | Resolved to **qs ≥ 6.14.2**; enforced via **`overrides`**. |
+| **Low** | **nodemailer** — SMTP handling / `envelope.size` ([GHSA-c7w3-x93f-qmm8](https://github.com/advisories/GHSA-c7w3-x93f-qmm8)) | Direct dependency bumped to **nodemailer ^8.0.4** (patched line). |
+
+After changes, run **`cd backend && npm audit`** — it should report **0 vulnerabilities**. Re-run **`npm install`** in CI/Render after pulling so the lockfile and overrides apply.
 
 ---
 
