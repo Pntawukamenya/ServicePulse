@@ -117,9 +117,13 @@ export default function DistrictSectorSelect({
   const selectClass = 'select-location';
   const errorClass = 'mt-1 text-xs text-error-600 dark:text-error-400';
 
+  const showSector = Boolean(district);
+  const showCellRow = includeCellAndVillage && Boolean(sector);
+  const showVillage = includeCellAndVillage && Boolean(cell);
+
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Row 1: District and Sector */}
+      {/* District first; Sector only after a district is chosen */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <select
@@ -139,28 +143,30 @@ export default function DistrictSectorSelect({
           </select>
           {districtError && <p className={errorClass}>{districtError}</p>}
         </div>
-        <div>
-          <select
-            id="sector"
-            value={sector}
-            onChange={handleSectorChange}
-            disabled={disabled || !district}
-            className={selectClass}
-            aria-required={sectorRequired}
-            aria-invalid={!!sectorError}
-            aria-label="Sector"
-          >
-            <option value="">Select Sector</option>
-            {sectors.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          {sectorError && <p className={errorClass}>{sectorError}</p>}
-        </div>
+        {showSector && (
+          <div>
+            <select
+              id="sector"
+              value={sector}
+              onChange={handleSectorChange}
+              disabled={disabled || !district}
+              className={selectClass}
+              aria-required={sectorRequired}
+              aria-invalid={!!sectorError}
+              aria-label="Sector"
+            >
+              <option value="">Select Sector</option>
+              {sectors.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            {sectorError && <p className={errorClass}>{sectorError}</p>}
+          </div>
+        )}
       </div>
 
-      {/* Row 2: Cell and Village */}
-      {includeCellAndVillage && (
+      {/* Cell after sector; Village after cell */}
+      {showCellRow && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <select
@@ -180,24 +186,26 @@ export default function DistrictSectorSelect({
             </select>
             {cellError && <p className={errorClass}>{cellError}</p>}
           </div>
-          <div>
-            <select
-              id="village"
-              value={village}
-              onChange={(e) => onVillageChange?.(e.target.value)}
-              disabled={disabled || !district || !sector || !cell}
-              className={selectClass}
-              aria-required={villageRequired}
-              aria-invalid={!!villageError}
-              aria-label="Village"
-            >
-              <option value="">Select Village</option>
-              {villages.map((v) => (
-                <option key={v} value={v}>{v}</option>
-              ))}
-            </select>
-            {villageError && <p className={errorClass}>{villageError}</p>}
-          </div>
+          {showVillage && (
+            <div>
+              <select
+                id="village"
+                value={village}
+                onChange={(e) => onVillageChange?.(e.target.value)}
+                disabled={disabled || !district || !sector || !cell}
+                className={selectClass}
+                aria-required={villageRequired}
+                aria-invalid={!!villageError}
+                aria-label="Village"
+              >
+                <option value="">Select Village</option>
+                {villages.map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+              {villageError && <p className={errorClass}>{villageError}</p>}
+            </div>
+          )}
         </div>
       )}
     </div>
