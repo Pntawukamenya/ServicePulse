@@ -1,14 +1,21 @@
-# Render Blueprint for ServicePulse backend
-# See: https://docs.render.com/blueprint-spec
-# When connecting this repo, create a Web Service and set rootDir to backend.
-# Use this file for "Blueprint" or set the same values in the dashboard.
+# Render Blueprint — backend API (auto-deploy on push, similar to Vercel for the frontend)
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Setup once in Render Dashboard:
+# - Connect this Git repo → create or sync a Blueprint / Web Service from this file.
+# - Add secrets on the service: MONGODB_URI, JWT_SECRET, FRONTEND_URL (optional: AUTH_RATE_LIMIT_MAX).
+#
+# Behavior:
+# - autoDeployTrigger: commit → each new commit on `branch` triggers a deploy (like Vercel “Production” deploys).
+# - rootDir: backend → only changes under `backend/` count for this service (monorepo-friendly).
 
 services:
   - type: web
     name: servicepulse-api
     runtime: node
+    branch: main
+    autoDeployTrigger: commit
     rootDir: backend
-    # Install devDependencies so TypeScript and @types/* are available during build
     buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
-    # Add env vars in Render dashboard: MONGODB_URI, JWT_SECRET, FRONTEND_URL
+    healthCheckPath: /health

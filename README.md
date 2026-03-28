@@ -300,16 +300,22 @@ Base path: `/api`. All protected routes require `Authorization: Bearer <token>`.
    - **Start Command:** `npm start`
    - **Runtime:** Node  
 
-   Alternatively, if you use [Render Blueprint](https://docs.render.com/blueprint-spec), the repo root includes a `render.yaml` with these values.
+   Alternatively, use **[Blueprint](https://docs.render.com/blueprint-spec)** (**New** → **Blueprint** → connect this repo): the root `render.yaml` defines the same settings plus **auto-deploy on push** (see below).
 
-4. **Environment variables** (Render → Environment)
+4. **Auto-deploy on every push (like Vercel)**  
+   - **If you use the Blueprint (`render.yaml`):** it sets `branch: main` and `autoDeployTrigger: commit`, so each **new commit pushed to `main`** triggers a production deploy for this service.  
+   - **If you created the Web Service manually:** open the service → **Settings** → **Build & Deploy** → set **Branch** to `main` (or your default branch) and turn **Auto-Deploy** **On**.  
+   - **Monorepo:** `rootDir: backend` means only changes under **`backend/`** start a new API deploy (frontend-only pushes won’t rebuild the API).  
+   - After the first successful deploy, **every `git push` to the linked branch** updates production the same way Vercel redeploys the frontend.
+
+5. **Environment variables** (Render → Environment)
    - `MONGODB_URI` — your MongoDB connection string  
    - `JWT_SECRET` — long random string (e.g. 32+ characters)  
    - `FRONTEND_URL` — your frontend URL (e.g. `https://your-app.vercel.app`, no trailing slash)
 
-5. **Deploy** — Create the service. Render sets `PORT` automatically. After deploy, open `https://<your-service>.onrender.com/health` to verify.
+6. **Deploy** — Create the service (or sync the Blueprint). Render sets `PORT` automatically. After deploy, open `https://<your-service>.onrender.com/health` to verify.
 
-6. **Seed (optional)** — Run `npm run seed` once (e.g. via Render Shell or locally with the same `MONGODB_URI`) to create agencies.
+7. **Seed (optional)** — Run `npm run seed` once (e.g. via Render Shell or locally with the same `MONGODB_URI`) to create agencies.
 
 ### Frontend (Vercel)
 
